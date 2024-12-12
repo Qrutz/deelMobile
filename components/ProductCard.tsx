@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 interface Product {
+    id: string;
     image: string;
     title: string;
     price: number;
@@ -10,35 +12,42 @@ interface Product {
 
 export default function ProductCard({ product }: { product: Product }) {
     const [liked, setLiked] = useState(false); // Track whether the product is liked
-
+    const router = useRouter(); // Navigation hook
     return (
-        <View style={styles.card}>
-            {/* Product Image */}
-            <View style={styles.imageContainer}>
-                <Image
-                    source={{ uri: product.image }}
-                    style={styles.image}
-                    resizeMode="cover"
-                />
-                {/* Heart Button */}
-                <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={() => setLiked(!liked)}
-                >
-                    <Ionicons
-                        name={liked ? 'heart' : 'heart-outline'}
-                        size={20}
-                        color={liked ? 'black' : 'black'}
+        <TouchableOpacity
+            onPress={() => {
+                router.push(`/product/${product.id}`);
+            }
+            }
+        >
+            <View style={styles.card}>
+                {/* Product Image */}
+                <View style={styles.imageContainer}>
+                    <Image
+                        source={{ uri: product.image }}
+                        style={styles.image}
+                        resizeMode="cover"
                     />
-                </TouchableOpacity>
+                    {/* Heart Button */}
+                    <TouchableOpacity
+                        style={styles.heartButton}
+                        onPress={() => setLiked(!liked)}
+                    >
+                        <Ionicons
+                            name={liked ? 'heart' : 'heart-outline'}
+                            size={20}
+                            color={liked ? 'black' : 'black'}
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Product Title */}
+                <Text style={styles.title}>{product.title}</Text>
+
+                {/* Product Price */}
+                <Text style={styles.price}>${product.price}</Text>
             </View>
-
-            {/* Product Title */}
-            <Text style={styles.title}>{product.title}</Text>
-
-            {/* Product Price */}
-            <Text style={styles.price}>${product.price}</Text>
-        </View>
+        </TouchableOpacity>
     );
 }
 
