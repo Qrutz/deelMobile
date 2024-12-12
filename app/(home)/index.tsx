@@ -1,19 +1,22 @@
 import React from 'react';
 import { Text, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import ProductCard from '@/components/ProductCard';
+import { Ionicons } from '@expo/vector-icons';
+import BottomNavigation from '@/components/BottomNavigation';
+
 
 export default function Marketplace() {
     const categories = ['Electronics', 'Textbooks', 'Furniture', 'Clothing', 'Accessories'];
 
     const products = [
-        { id: '1', title: 'Wool Sweater', image: 'https://via.placeholder.com/150', price: 8 },
-        { id: '2', title: 'Goat Wool Sweater', image: 'https://via.placeholder.com/150', price: 10 },
-        { id: '3', title: 'Boots', image: 'https://via.placeholder.com/150', price: 20 },
-        { id: '4', title: 'Backpack', image: 'https://via.placeholder.com/150', price: 15 },
+        { id: '1', title: 'Wool Sweater', image: 'https://blog.tincanknits.com/wp-content/uploads/2021/01/recyclingyarntutorial-tck-0223-1024x585.jpg', price: 8 },
+        { id: '2', title: 'textbook finance', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRamqFPV71D-ou9Hsg8554KxE_SNKG9UHZjrg&s', price: 10 },
+        { id: '3', title: 'Keyboard', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnHCOOSh_3AKj1tCi8MPFex4KFQXaEcqjwSCL9pqZ7jQZlMhrjfUO79goKo7HMBUL4rtc&usqp=CAU', price: 20 },
+        { id: '4', title: 'Stekpanna', image: 'https://i.redd.it/unmarked-no-3-skillet-need-identifying-v0-io9x6jujv1xb1.jpg?width=3120&format=pjpg&auto=webp&s=2db71c4b5c027e577be157c003f5e86971a9fd93', price: 15 },
     ];
 
     return (
-        <View className="flex-1 bg-gray-400">
+        <View className="flex-1 bg-white">
             {/* Header */}
             <View className="flex-row justify-between items-center px-6 py-9 bg-white shadow">
                 <View>
@@ -50,30 +53,33 @@ export default function Marketplace() {
                 numColumns={2}
                 contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10 }}
                 renderItem={({ item }) => (
-                    <View className="flex-1 p-2">
-                        <Text>{item.title}</Text>
+                    <View className="flex-1 py-2">
+                        <ProductCard product={item} />
+
                     </View>
                 )}
             />
 
             {/* Bottom Navigation */}
-            <View className="flex-row justify-around items-center bg-white py-3 border-t border-gray-300">
+            {/* <View className="flex-row justify-around items-center bg-white pb-8 py-3 border-t border-gray-300">
                 <TouchableOpacity>
-                    <Text className="text-gray-700 text-lg">🏠</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Text className="text-gray-700 text-lg">❤️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity className="bg-pink w-12 h-12 rounded-full flex items-center justify-center">
-                    <Text className="text-white text-2xl font-bold">+</Text>
+                    <Ionicons name="home" size={24} color="black" />
                 </TouchableOpacity>
                 <TouchableOpacity>
-                    <Text className="text-gray-700 text-lg">💬</Text>
+                    <Ionicons name="heart" size={24} color="black" />
+                </TouchableOpacity>
+                <TouchableOpacity className="bg-pink-500 w-12 h-12 rounded-xl flex items-center justify-center">
+                    <Ionicons name="add" size={24} color="black" />
                 </TouchableOpacity>
                 <TouchableOpacity>
-                    <Text className="text-gray-700 text-lg">👤</Text>
+                    <Ionicons name="chatbox-ellipses" size={24} color="black" />
                 </TouchableOpacity>
-            </View>
+                <TouchableOpacity>
+                    <Ionicons name="person" size={24} color="black" />
+                </TouchableOpacity>
+            </View> */}
+            <BottomNavigation />
+
         </View>
     );
 }
