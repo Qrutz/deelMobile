@@ -78,7 +78,7 @@ export default function Marketplace() {
                     <Ionicons name="person" size={24} color="black" />
                 </TouchableOpacity>
             </View> */}
-            <BottomNavigation />
+
 
         </View>
     );
