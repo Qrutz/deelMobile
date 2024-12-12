@@ -32,6 +32,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/BubblegumSans-Regular.ttf",
+            "./assets/fonts/CherryBombOne-Regular.ttf",
+            "./assets/fonts/Grandstander-VariableFont_wght.ttf"
+          ]
+        }
       ]
     ],
     "experiments": {
