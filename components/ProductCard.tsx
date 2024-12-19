@@ -17,8 +17,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <TouchableOpacity
             onPress={() => {
                 router.push(`/product/${product.id}`);
-            }
-            }
+            }}
         >
             <View style={styles.card}>
                 {/* Product Image */}
@@ -45,7 +44,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 <Text style={styles.title}>{product.title}</Text>
 
                 {/* Product Price */}
-                <Text style={styles.price}>${product.price}</Text>
+                <Text style={styles.price}>{product.price} kr</Text>
             </View>
         </TouchableOpacity>
     );

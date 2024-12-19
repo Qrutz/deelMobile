@@ -27,33 +27,43 @@ export default function Marketplace() {
 
     const toggleFilterMode = () => {
         setFilterMode(filterMode === 'building' ? 'nearby' : 'building');
-        Alert.alert(
-            'Filter Changed',
-            `Now showing ${filterMode === 'building' ? 'Nearby Listings' : 'Same Building Listings'}.`
-        );
     };
 
     return (
         <View className="flex-1 bg-white">
             {/* Header */}
-            <View className="flex-row justify-between items-center px-6 py-4 pt-12 bg-white ">
-                <View>
-                    <Text className="text-lg font-bold text-gray-900">Hello, User</Text>
-                    <Text className="text-sm text-gray-500 mt-1">Explore {filterMode === 'building' ? 'same building deals' : 'nearby listings'}</Text>
+            <View className="px-6 py-4 pt-12 bg-white">
+                <View className="flex-row justify-between items-center">
+                    <View>
+                        <Text className="text-lg font-bold text-gray-900">Hello, Johan</Text>
+                        <Text className="text-sm text-gray-500 mt-1">Explore {filterMode === 'building' ? 'same building deals' : 'nearby listings'}</Text>
+                    </View>
+                    <View className="flex-row items-center gap-2">
+                        {/* Search Icon */}
+                        <TouchableOpacity
+                            onPress={() => Alert.alert('Search', 'Search functionality coming soon!')}
+                            className="bg-gray-100 p-2 rounded-lg"
+                        >
+                            <Ionicons name="search-outline" size={20} color="black" />
+                        </TouchableOpacity>
+                        {/* Toggle Button */}
+                        <TouchableOpacity
+                            className="flex-row items-center bg-gray-100 py-2 px-4 rounded-full"
+                            onPress={toggleFilterMode}
+                        >
+                            <Ionicons name="location-outline" size={16} color="black" />
+                            <Text className="text-sm font-semibold text-gray-800 ml-2">
+                                {filterMode === 'building' ? 'Building' : 'Nearby'}
+                            </Text>
+                        </TouchableOpacity>
+
+
+                    </View>
                 </View>
-                <TouchableOpacity
-                    className="flex-row items-center bg-gray-100 py-2 px-4 rounded-full"
-                    onPress={toggleFilterMode}
-                >
-                    <Ionicons name="location-outline" size={16} color="black" />
-                    <Text className="text-sm font-semibold text-gray-800 ml-2">
-                        {filterMode === 'building' ? 'Building' : 'Nearby'}
-                    </Text>
-                </TouchableOpacity>
             </View>
 
             {/* Categories */}
-            <View className="h-12">
+            <View className="h-12 mt-4">
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
