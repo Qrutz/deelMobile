@@ -8,10 +8,10 @@ export default function BottomNavigation() {
     const pathname = usePathname(); // Get the current route path
 
     // Tabs with their respective routes
-    const tabs = [
+    const tabs: { name: string, icon: keyof typeof Ionicons.glyphMap, activeIcon: keyof typeof Ionicons.glyphMap, route: string }[] = [
         { name: 'home', icon: 'home-outline', activeIcon: 'home', route: '/' },
         { name: 'heart', icon: 'heart-outline', activeIcon: 'heart', route: '/favorites' },
-        { name: 'add', icon: 'add', activeIcon: 'add', route: '/add' }, // Add button
+        { name: 'add', icon: 'add', activeIcon: 'add', route: '/add-listing' }, // Add button
         { name: 'chat', icon: 'chatbox-ellipses-outline', activeIcon: 'chatbox-ellipses', route: '/chat' },
         { name: 'person', icon: 'person-outline', activeIcon: 'person', route: '/profile' },
     ];
@@ -25,7 +25,7 @@ export default function BottomNavigation() {
                         <TouchableOpacity
                             key={tab.name}
                             className="bg-pink-500 w-14 h-14 rounded-full -mt-8 flex items-center justify-center shadow-lg"
-                            onPress={() => router.push(tab.route)}
+                            onPress={() => router.push(tab.route as any)}
                         >
                             <Ionicons name={tab.activeIcon} size={28} color="black" />
                         </TouchableOpacity>
@@ -36,7 +36,7 @@ export default function BottomNavigation() {
                 return (
                     <TouchableOpacity
                         key={tab.name}
-                        onPress={() => router.push(tab.route)}
+                        onPress={() => router.push(tab.route as any)}
                         className="flex items-center justify-center"
                     >
                         <Ionicons

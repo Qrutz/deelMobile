@@ -34,7 +34,7 @@ export default function ProfilePage() {
             <View style={styles.settingsContainer}>
                 {settings.map((item, index) => (
                     <TouchableOpacity key={index} style={styles.settingItem}>
-                        <Ionicons name={item.icon} size={24} color="#555" />
+                        <Ionicons name={item.icon as any} size={24} color="#555" />
                         <Text style={styles.settingText}>{item.name}</Text>
                         <Ionicons name="chevron-forward-outline" size={20} color="#ccc" />
                     </TouchableOpacity>
