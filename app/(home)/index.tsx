@@ -1,19 +1,27 @@
 import React from 'react';
-import { Text, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, View, FlatList, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import ProductCard from '@/components/ProductCard';
-import { Ionicons } from '@expo/vector-icons';
-import BottomNavigation from '@/components/BottomNavigation';
-
+import { useFetchListings } from '@/hooks/useFetchListings';
 
 export default function Marketplace() {
     const categories = ['Electronics', 'Textbooks', 'Furniture', 'Clothing', 'Accessories'];
+    const { data: products, isLoading, isError } = useFetchListings();
 
-    const products = [
-        { id: '1', title: 'Wool Sweater', image: 'https://blog.tincanknits.com/wp-content/uploads/2021/01/recyclingyarntutorial-tck-0223-1024x585.jpg', price: 8 },
-        { id: '2', title: 'textbook finance', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRamqFPV71D-ou9Hsg8554KxE_SNKG9UHZjrg&s', price: 10 },
-        { id: '3', title: 'Keyboard', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnHCOOSh_3AKj1tCi8MPFex4KFQXaEcqjwSCL9pqZ7jQZlMhrjfUO79goKo7HMBUL4rtc&usqp=CAU', price: 20 },
-        { id: '4', title: 'Stekpanna', image: 'https://i.redd.it/unmarked-no-3-skillet-need-identifying-v0-io9x6jujv1xb1.jpg?width=3120&format=pjpg&auto=webp&s=2db71c4b5c027e577be157c003f5e86971a9fd93', price: 15 },
-    ];
+    if (isLoading) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
+
+    if (isError) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <Text className="text-lg font-bold text-red-500">Failed to load listings</Text>
+            </View>
+        );
+    }
 
     return (
         <View className="flex-1 bg-white">
@@ -49,37 +57,15 @@ export default function Marketplace() {
             {/* Product Grid */}
             <FlatList
                 data={products}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.id.toString()}
                 numColumns={2}
                 contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10 }}
                 renderItem={({ item }) => (
                     <View className="flex-1 py-2">
                         <ProductCard product={item} />
-
                     </View>
                 )}
             />
-
-            {/* Bottom Navigation */}
-            {/* <View className="flex-row justify-around items-center bg-white pb-8 py-3 border-t border-gray-300">
-                <TouchableOpacity>
-                    <Ionicons name="home" size={24} color="black" />
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Ionicons name="heart" size={24} color="black" />
-                </TouchableOpacity>
-                <TouchableOpacity className="bg-pink-500 w-12 h-12 rounded-xl flex items-center justify-center">
-                    <Ionicons name="add" size={24} color="black" />
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Ionicons name="chatbox-ellipses" size={24} color="black" />
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Ionicons name="person" size={24} color="black" />
-                </TouchableOpacity>
-            </View> */}
-
-
         </View>
     );
 }

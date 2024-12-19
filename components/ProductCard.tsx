@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 
 interface Product {
     id: string;
-    image: string;
+    ImageUrl: string;
     title: string;
     price: number;
 }
@@ -24,7 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 {/* Product Image */}
                 <View style={styles.imageContainer}>
                     <Image
-                        source={{ uri: product.image }}
+                        source={{ uri: product.ImageUrl }}
                         style={styles.image}
                         resizeMode="cover"
                     />
