@@ -1,11 +1,33 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useFetchListing } from '../../hooks/useFetchListing';
 
 export default function ProductPage() {
-    const params = useLocalSearchParams();
+    const { id } = useLocalSearchParams() as { id: string };
     const router = useRouter();
+
+    const { data: listing, isLoading, isError } = useFetchListing(id);
+
+    if (isLoading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
+
+    if (isError || !listing) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>Failed to load listing</Text>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                    <Ionicons name="arrow-back" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -16,12 +38,7 @@ export default function ProductPage() {
 
             {/* Product Image */}
             <View style={styles.imageContainer}>
-                <Image
-                    source={{
-                        uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRamqFPV71D-ou9Hsg8554KxE_SNKG9UHZjrg&s',
-                    }}
-                    style={styles.image}
-                />
+                <Image source={{ uri: listing.ImageUrl }} style={styles.image} />
                 {/* Heart Button */}
                 <TouchableOpacity style={styles.heartButton}>
                     <Ionicons name="heart-outline" size={24} color="black" />
@@ -32,9 +49,11 @@ export default function ProductPage() {
             <View style={styles.detailsContainer}>
                 {/* Title and Price */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>{params.title || 'Product Title'}</Text>
-                    <Text style={styles.price}>${params.price || '0'}</Text>
+                    <Text style={styles.title}>{listing.title}</Text>
+                    <Text style={styles.price}>${listing.price.toFixed(2)}</Text>
                 </View>
+
+                <Text style={styles.description}>{listing.description}</Text>
 
                 {/* Action Buttons */}
                 <View style={styles.buttonsContainer}>
@@ -109,6 +128,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#4CAF50',
     },
+    description: {
+        fontSize: 16,
+        color: '#666',
+        marginBottom: 20,
+    },
     buttonsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -137,5 +161,11 @@ const styles = StyleSheet.create({
         color: '#333',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 18,
+        textAlign: 'center',
+        marginTop: 20,
     },
 });
