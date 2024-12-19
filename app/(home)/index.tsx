@@ -1,11 +1,13 @@
-import React from 'react';
-import { Text, View, FlatList, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { Text, View, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import ProductCard from '@/components/ProductCard';
 import { useFetchListings } from '@/hooks/useFetchListings';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Marketplace() {
     const categories = ['Electronics', 'Textbooks', 'Furniture', 'Clothing', 'Accessories'];
     const { data: products, isLoading, isError } = useFetchListings();
+    const [filterMode, setFilterMode] = useState<'building' | 'nearby'>('building'); // State to toggle proximity filters
 
     if (isLoading) {
         return (
@@ -23,21 +25,35 @@ export default function Marketplace() {
         );
     }
 
+    const toggleFilterMode = () => {
+        setFilterMode(filterMode === 'building' ? 'nearby' : 'building');
+        Alert.alert(
+            'Filter Changed',
+            `Now showing ${filterMode === 'building' ? 'Nearby Listings' : 'Same Building Listings'}.`
+        );
+    };
+
     return (
         <View className="flex-1 bg-white">
             {/* Header */}
-            <View className="flex-row justify-between items-center px-6 py-9 bg-white shadow">
+            <View className="flex-row justify-between items-center px-6 py-4 pt-12 bg-white ">
                 <View>
                     <Text className="text-lg font-bold text-gray-900">Hello, User</Text>
-                    <Text className="text-sm text-gray-500">Let's start shopping</Text>
+                    <Text className="text-sm text-gray-500 mt-1">Explore {filterMode === 'building' ? 'same building deals' : 'nearby listings'}</Text>
                 </View>
-                <TouchableOpacity className="bg-gray-200 p-2 rounded-full">
-                    <Text className="text-gray-700 text-lg">🔍</Text>
+                <TouchableOpacity
+                    className="flex-row items-center bg-gray-100 py-2 px-4 rounded-full"
+                    onPress={toggleFilterMode}
+                >
+                    <Ionicons name="location-outline" size={16} color="black" />
+                    <Text className="text-sm font-semibold text-gray-800 ml-2">
+                        {filterMode === 'building' ? 'Building' : 'Nearby'}
+                    </Text>
                 </TouchableOpacity>
             </View>
 
             {/* Categories */}
-            <View className="h-12 bg-red-300">
+            <View className="h-12">
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -54,6 +70,15 @@ export default function Marketplace() {
                 </ScrollView>
             </View>
 
+            {/* Proximity Banner */}
+            <View className="bg-green-100 py-3 px-6 my-2 mx-4 rounded-lg">
+                <Text className="text-sm text-gray-700">
+                    {filterMode === 'building'
+                        ? 'Showing listings available in your building.'
+                        : 'Showing listings within 500 meters.'}
+                </Text>
+            </View>
+
             {/* Product Grid */}
             <FlatList
                 data={products}
@@ -62,7 +87,7 @@ export default function Marketplace() {
                 contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10 }}
                 renderItem={({ item }) => (
                     <View className="flex-1 py-2">
-                        <ProductCard product={item} />
+                        <ProductCard product={{ ...item, proximity: filterMode === 'building' ? 'Same Building' : '500 meters away' }} />
                     </View>
                 )}
             />
