@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Button, Image, TextInput, Alert, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
+import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 
 const AddListing: React.FC = () => {
     const router = useRouter();
@@ -13,6 +15,23 @@ const AddListing: React.FC = () => {
     const [price, setPrice] = useState('');
     const [latitude, setLatitude] = useState('');
     const [longitude, setLongitude] = useState('');
+    const [locationError, setLocationError] = useState('');
+
+    const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || '';
+
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                setLocationError('Permission to access location was denied');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            setLatitude(location.coords.latitude.toString());
+            setLongitude(location.coords.longitude.toString());
+        })();
+    }, []);
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -36,6 +55,12 @@ const AddListing: React.FC = () => {
                 return;
             }
 
+            if (!latitude || !longitude) {
+                Alert.alert('Error', 'Could not retrieve your location');
+                return;
+            }
+
+
             // if no user id, give an error
             if (!user?.id) {
                 Alert.alert('Error', 'User not found');
@@ -44,7 +69,7 @@ const AddListing: React.FC = () => {
 
             // Step 1: Get SAS URL
             const fileName = image.split('/').pop();
-            const sasResponse = await fetch('http://localhost:3000/generate-sas-url', {
+            const sasResponse = await fetch(`${API_BASE_URL}/generate-sas-url`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fileName }),
@@ -71,7 +96,7 @@ const AddListing: React.FC = () => {
 
             // Step 3: Submit Listing
 
-            const createResponse = await fetch('http://localhost:3000/listings', {
+            const createResponse = await fetch(`${API_BASE_URL}/listings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -124,23 +149,7 @@ const AddListing: React.FC = () => {
                 placeholder="Enter price"
             />
 
-            <Text>Latitude:</Text>
-            <TextInput
-                style={styles.input}
-                value={latitude}
-                onChangeText={setLatitude}
-                keyboardType="numeric"
-                placeholder="Enter latitude"
-            />
 
-            <Text>Longitude:</Text>
-            <TextInput
-                style={styles.input}
-                value={longitude}
-                onChangeText={setLongitude}
-                keyboardType="numeric"
-                placeholder="Enter longitude"
-            />
 
             <Button title="Pick an Image" onPress={pickImage} />
             {image && <Image source={{ uri: image }} style={styles.image} />}
