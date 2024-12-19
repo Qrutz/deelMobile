@@ -4,11 +4,17 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import * as Location from 'expo-location';
+import { useCreateListing } from '../../hooks/useCreateListing';
 import Constants from 'expo-constants';
+
+const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
+
 
 const AddListing: React.FC = () => {
     const router = useRouter();
     const { user } = useUser();
+    const { mutate: createListing } = useCreateListing();
+
     const [image, setImage] = useState<string | null>(null);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -16,8 +22,6 @@ const AddListing: React.FC = () => {
     const [latitude, setLatitude] = useState('');
     const [longitude, setLongitude] = useState('');
     const [locationError, setLocationError] = useState('');
-
-    const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || '';
 
     useEffect(() => {
         (async () => {
@@ -41,35 +45,21 @@ const AddListing: React.FC = () => {
             quality: 1,
         });
 
-
-
         if (!result.canceled) {
-            setImage(result.assets[0].uri); // Adjusted for Expo's updated API
+            setImage(result.assets[0].uri);
         }
     };
 
-    const createListing = async () => {
+    const handleSubmit = async () => {
+        if (!title || !description || !price || !latitude || !longitude || !image || !user?.id) {
+            Alert.alert('Error', 'All fields are required');
+            return;
+        }
+
         try {
-            if (!title || !description || !price || !latitude || !longitude || !image) {
-                Alert.alert('Error', 'All fields are required');
-                return;
-            }
-
-            if (!latitude || !longitude) {
-                Alert.alert('Error', 'Could not retrieve your location');
-                return;
-            }
-
-
-            // if no user id, give an error
-            if (!user?.id) {
-                Alert.alert('Error', 'User not found');
-                return;
-            }
-
             // Step 1: Get SAS URL
             const fileName = image.split('/').pop();
-            const sasResponse = await fetch(`${API_BASE_URL}/generate-sas-url`, {
+            const sasResponse = await fetch(`${API_URL}/generate-sas-url`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fileName }),
@@ -94,28 +84,27 @@ const AddListing: React.FC = () => {
                 return;
             }
 
-            // Step 3: Submit Listing
-
-            const createResponse = await fetch(`${API_BASE_URL}/listings`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            // Step 3: Submit Listing via useCreateListing hook
+            createListing(
+                {
                     title,
                     description,
                     price: parseFloat(price),
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),
                     userId: user.id,
-                    imageUrl: sasUrl.split('?')[0], // Remove the SAS token from the URL
-                }),
-            });
-
-            if (createResponse.ok) {
-                Alert.alert('Success', 'Listing created successfully');
-                router.push('/'); // Navigate back to the homepage or another route
-            } else {
-                Alert.alert('Error', 'Failed to create listing');
-            }
+                    imageUrl: sasUrl.split('?')[0],
+                },
+                {
+                    onSuccess: () => {
+                        Alert.alert('Success', 'Listing created successfully');
+                        router.push('/');
+                    },
+                    onError: () => {
+                        Alert.alert('Error', 'Failed to create listing');
+                    },
+                }
+            );
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'An unexpected error occurred');
@@ -125,12 +114,7 @@ const AddListing: React.FC = () => {
     return (
         <View style={styles.container}>
             <Text>Title:</Text>
-            <TextInput
-                style={styles.input}
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Enter title"
-            />
+            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Enter title" />
 
             <Text>Description:</Text>
             <TextInput
@@ -149,12 +133,10 @@ const AddListing: React.FC = () => {
                 placeholder="Enter price"
             />
 
-
-
             <Button title="Pick an Image" onPress={pickImage} />
             {image && <Image source={{ uri: image }} style={styles.image} />}
 
-            <Button title="Create Listing" onPress={createListing} />
+            <Button title="Create Listing" onPress={handleSubmit} />
         </View>
     );
 };
