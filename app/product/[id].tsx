@@ -1,8 +1,16 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+    View,
+    Text,
+    Image,
+    StyleSheet,
+    TouchableOpacity,
+    ActivityIndicator,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchListing } from '../../hooks/useFetchListing';
+
 
 export default function ProductPage() {
     const { id } = useLocalSearchParams() as { id: string };
@@ -10,6 +18,7 @@ export default function ProductPage() {
 
     const { data: listing, isLoading, isError } = useFetchListing(id);
 
+    // Loading state
     if (isLoading) {
         return (
             <View style={styles.container}>
@@ -18,17 +27,22 @@ export default function ProductPage() {
         );
     }
 
+    // Error state
     if (isError || !listing) {
         return (
             <View style={styles.container}>
                 <Text style={styles.errorText}>Failed to load listing</Text>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.push('/')}
+                >
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
             </View>
         );
     }
 
+    // Render Product Page
     return (
         <View style={styles.container}>
             {/* Back Button */}
@@ -55,6 +69,12 @@ export default function ProductPage() {
 
                 <Text style={styles.description}>{listing.description}</Text>
 
+                {/* Seller Info */}
+                <View style={styles.sellerContainer}>
+                    <Image source={{ uri: listing.user.image }} style={styles.sellerImage} />
+                    <Text style={styles.sellerName}>{listing.user.fullName}</Text>
+                </View>
+
                 {/* Action Buttons */}
                 <View style={styles.buttonsContainer}>
                     <TouchableOpacity style={styles.buyButton}>
@@ -70,9 +90,25 @@ export default function ProductPage() {
 }
 
 const styles = StyleSheet.create({
+    // All previous styles
     container: {
         flex: 1,
         backgroundColor: '#fff',
+    },
+    sellerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    sellerImage: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 10,
+    },
+    sellerName: {
+        fontSize: 16,
+        fontWeight: 'bold',
     },
     backButton: {
         position: 'absolute',

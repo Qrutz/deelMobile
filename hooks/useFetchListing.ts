@@ -1,3 +1,4 @@
+import { Listing } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
@@ -11,7 +12,7 @@ const fetchListing = async (id: string) => {
 };
 
 export const useFetchListing = (id: string) => {
-  return useQuery({
+  return useQuery<Listing>({
     queryKey: ['listing', id],
     queryFn: () => fetchListing(id),
   });
