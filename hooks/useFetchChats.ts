@@ -5,6 +5,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 // Chat type
 export interface Chat {
   id: string;
+  name: string | null;
   isGroup: boolean;
   createdAt: string;
   members: { userId: string; user: { id: string; name: string } }[];

@@ -1,30 +1,29 @@
 import React, { useEffect, useRef } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useFetchChats } from '../../hooks/useFetchChats'; // Import the hook
+import { useFetchChats } from '../../hooks/useFetchChats';
 import { useUser } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
 import { io } from 'socket.io-client';
 
+// Initialize socket
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 const socket = io(API_URL);
 
-
 const ChatList = () => {
     const router = useRouter();
-    const { user } = useUser(); // Get the current logged-in user
+    const { user } = useUser(); // Current logged-in user
 
-    // Use the custom hook to fetch chats
+    // Fetch chats using hook
     const { data: chats, isLoading, isError } = useFetchChats(user?.id || '');
 
     const notificationListener = useRef<any>();
-
 
     useEffect(() => {
         // Request permission for notifications
         Notifications.requestPermissionsAsync();
 
-        // Listen for incoming socket notifications
+        // Listen for incoming notifications
         socket.on('notifyMessage', async ({ chatId, content, senderName }) => {
             await Notifications.scheduleNotificationAsync({
                 content: {
@@ -36,11 +35,11 @@ const ChatList = () => {
         });
 
         return () => {
-            socket.off('notifyMessage');
+            socket.off('notifyMessage'); // Cleanup socket listener
         };
     }, []);
 
-    // Handle loading state
+    // Loading state
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -49,7 +48,7 @@ const ChatList = () => {
         );
     }
 
-    // Handle error state
+    // Error state
     if (isError) {
         return (
             <View style={styles.errorContainer}>
@@ -58,7 +57,7 @@ const ChatList = () => {
         );
     }
 
-    // Handle empty state
+    // Empty state
     if (!chats || chats.length === 0) {
         return (
             <View style={styles.emptyContainer}>
@@ -67,29 +66,39 @@ const ChatList = () => {
         );
     }
 
-    // Render the chat list
+    // Render chat list
     return (
         <View style={styles.container}>
             <FlatList
                 data={chats}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => {
-                    // Get chat details
-                    const otherUser = item.members.find((m) => m.userId !== user?.id)?.user; // Find the other user
+                    // Handle group vs private chat
+                    const isGroupChat = item.isGroup;
+                    const chatName = isGroupChat
+                        ? item.name // Group chat uses the building name
+                        : item.members.find((m) => m.userId !== user?.id)?.user?.name || 'Unknown User';
+
+                    // Last message & timestamp
                     const lastMessage = item.messages[0]?.content || 'No messages yet';
                     const timestamp = item.messages[0]?.createdAt || '';
 
                     return (
                         <TouchableOpacity
                             style={styles.chatItem}
-                            onPress={() => router.push(`/chat/${item.id}`)} // Navigate to specific chat
+                            onPress={() => router.push(`/chat/${item.id}`)} // Navigate to chat
                         >
                             <View style={styles.chatContent}>
-                                <Text style={styles.chatName}>{otherUser?.name || 'Unknown User'}</Text>
+                                <Text style={styles.chatName}>{chatName}</Text>
                                 <Text style={styles.chatLastMessage}>{lastMessage}</Text>
                             </View>
                             <Text style={styles.chatTimestamp}>
-                                {timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                {timestamp
+                                    ? new Date(timestamp).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })
+                                    : ''}
                             </Text>
                         </TouchableOpacity>
                     );
