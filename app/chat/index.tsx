@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFetchChats } from '../../hooks/useFetchChats'; // Import the hook
 import { useUser } from '@clerk/clerk-expo';
+import * as Notifications from 'expo-notifications';
+import { io } from 'socket.io-client';
+
+const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
+const socket = io(API_URL);
+
 
 const ChatList = () => {
     const router = useRouter();
@@ -10,6 +16,29 @@ const ChatList = () => {
 
     // Use the custom hook to fetch chats
     const { data: chats, isLoading, isError } = useFetchChats(user?.id || '');
+
+    const notificationListener = useRef<any>();
+
+
+    useEffect(() => {
+        // Request permission for notifications
+        Notifications.requestPermissionsAsync();
+
+        // Listen for incoming socket notifications
+        socket.on('notifyMessage', async ({ chatId, content, senderName }) => {
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: `${senderName} sent a message`,
+                    body: content,
+                },
+                trigger: null, // Show immediately
+            });
+        });
+
+        return () => {
+            socket.off('notifyMessage');
+        };
+    }, []);
 
     // Handle loading state
     if (isLoading) {
