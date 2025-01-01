@@ -6,17 +6,48 @@ import {
     StyleSheet,
     TouchableOpacity,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchListing } from '../../hooks/useFetchListing';
+import { useCreateChat } from '@/hooks/useCreateChat';
+import { useUser } from '@clerk/clerk-expo';
 
 
 export default function ProductPage() {
     const { id } = useLocalSearchParams() as { id: string };
     const router = useRouter();
-
+    const { user } = useUser(); // Current logged-in user
     const { data: listing, isLoading, isError } = useFetchListing(id);
+
+    // Use the chat creation hook
+    const createChatMutation = useCreateChat();
+
+    // Start or fetch chat
+    const startChat = async () => {
+        if (!user || !listing) {
+            Alert.alert('Error', 'User or listing data missing.');
+            return;
+        }
+
+        createChatMutation.mutate(
+            {
+                userId1: user.id, // Current user ID
+                userId2: listing.user.id, // Listing owner's ID
+            },
+            {
+                onSuccess: (chat) => {
+                    // Navigate to the chatroom with the chat ID
+                    router.push(`/chat/${chat.id}`);
+                },
+                onError: () => {
+                    Alert.alert('Error', 'Could not start chat. Please try again later.');
+                },
+            }
+        );
+    };
+
 
     // Loading state
     if (isLoading) {
@@ -80,8 +111,16 @@ export default function ProductPage() {
                     <TouchableOpacity style={styles.buyButton}>
                         <Text style={styles.buyButtonText}>Buy now</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.chatButton}>
-                        <Text style={styles.chatButtonText}>Chat with the seller</Text>
+                    <TouchableOpacity
+                        style={styles.chatButton}
+                        onPress={startChat}
+                        disabled={createChatMutation.isPending}
+                    >
+                        {createChatMutation.isPending ? (
+                            <ActivityIndicator size="small" color="#000" />
+                        ) : (
+                            <Text style={styles.chatButtonText}>Chat with the seller</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>

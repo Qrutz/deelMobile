@@ -1,33 +1,70 @@
 import React from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFetchChats } from '../../hooks/useFetchChats'; // Import the hook
+import { useUser } from '@clerk/clerk-expo';
 
 const ChatList = () => {
     const router = useRouter();
+    const { user } = useUser(); // Get the current logged-in user
 
-    // Sample ongoing chats
-    const chats = [
-        { id: '1', name: 'Anna Svensson', lastMessage: 'Hey, how are you?', timestamp: '10:30 AM' },
-        { id: '2', name: 'Erik Johansson', lastMessage: 'Let me know about the deal.', timestamp: '9:45 AM' },
-    ];
+    // Use the custom hook to fetch chats
+    const { data: chats, isLoading, isError } = useFetchChats(user?.id || '');
 
+    // Handle loading state
+    if (isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+            </View>
+        );
+    }
+
+    // Handle error state
+    if (isError) {
+        return (
+            <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>Failed to load chats. Please try again.</Text>
+            </View>
+        );
+    }
+
+    // Handle empty state
+    if (!chats || chats.length === 0) {
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No chats yet. Start chatting with sellers!</Text>
+            </View>
+        );
+    }
+
+    // Render the chat list
     return (
         <View style={styles.container}>
             <FlatList
                 data={chats}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        style={styles.chatItem}
-                        onPress={() => router.push(`/chat/${item.id}`)} // Navigate to specific chat
-                    >
-                        <View style={styles.chatContent}>
-                            <Text style={styles.chatName}>{item.name}</Text>
-                            <Text style={styles.chatLastMessage}>{item.lastMessage}</Text>
-                        </View>
-                        <Text style={styles.chatTimestamp}>{item.timestamp}</Text>
-                    </TouchableOpacity>
-                )}
+                renderItem={({ item }) => {
+                    // Get chat details
+                    const otherUser = item.members.find((m) => m.userId !== user?.id)?.user; // Find the other user
+                    const lastMessage = item.messages[0]?.content || 'No messages yet';
+                    const timestamp = item.messages[0]?.createdAt || '';
+
+                    return (
+                        <TouchableOpacity
+                            style={styles.chatItem}
+                            onPress={() => router.push(`/chat/${item.id}`)} // Navigate to specific chat
+                        >
+                            <View style={styles.chatContent}>
+                                <Text style={styles.chatName}>{otherUser?.name || 'Unknown User'}</Text>
+                                <Text style={styles.chatLastMessage}>{lastMessage}</Text>
+                            </View>
+                            <Text style={styles.chatTimestamp}>
+                                {timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                }}
             />
         </View>
     );
@@ -40,6 +77,29 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         padding: 10,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    errorText: {
+        fontSize: 16,
+        color: 'red',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#777',
     },
     chatItem: {
         flexDirection: 'row',
