@@ -59,7 +59,7 @@ const AddListing: React.FC = () => {
         try {
             // Step 1: Get SAS URL
             const fileName = image.split('/').pop();
-            const sasResponse = await fetch(`${API_URL}/generate-sas-url`, {
+            const sasResponse = await fetch(`${API_URL}/sas/generate-sas-url`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fileName }),
