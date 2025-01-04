@@ -19,4 +19,5 @@ export interface Listing {
   createdAt: string; // Date as a string in ISO format
   userId: string; // Clerk user ID
   user: User; // Nested user object
+  isOwner?: boolean;
 }

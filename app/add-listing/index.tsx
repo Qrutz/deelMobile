@@ -92,7 +92,6 @@ const AddListing: React.FC = () => {
                     price: parseFloat(price),
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),
-                    userId: user.id,
                     imageUrl: sasUrl.split('?')[0],
                 },
                 {

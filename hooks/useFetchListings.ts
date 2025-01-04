@@ -1,15 +1,34 @@
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@clerk/clerk-expo'; // Import Clerk auth
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
-const fetchListings = async () => {
-  const response = await fetch(`${API_URL}/listings`);
+// Fetch Listings with Authorization Header
+const fetchListings = async (token: string) => {
+  const response = await fetch(`${API_URL}/listings`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`, // Attach Bearer token
+      'Content-Type': 'application/json',
+    },
+  });
+
   if (!response.ok) {
     throw new Error('Failed to fetch listings');
   }
+
   return response.json();
 };
 
+// React Query Hook
 export const useFetchListings = () => {
-  return useQuery({ queryKey: ['listings'], queryFn: fetchListings });
+  const { getToken } = useAuth(); // Get Clerk token
+
+  return useQuery({
+    queryKey: ['listings'],
+    queryFn: async () => {
+      const token = await getToken(); // Fetch the token dynamically
+      return fetchListings(token!);
+    },
+  });
 };

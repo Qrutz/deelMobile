@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, Text, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 
@@ -7,13 +7,31 @@ export default function BottomNavigation() {
     const router = useRouter();
     const pathname = usePathname(); // Get the current route path
 
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 0.9,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    const handlePressOut = (route: "/" | "/add-listing" | "/chat" | "/profile" | "/seller-dashboard") => {
+        Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+        }).start(() => router.push(route));
+    };
+
     // Tabs with their respective routes
-    const tabs: { name: string, icon: keyof typeof Ionicons.glyphMap, activeIcon: keyof typeof Ionicons.glyphMap, route: string }[] = [
-        { name: 'home', icon: 'home-outline', activeIcon: 'home', route: '/' },
-        { name: 'heart', icon: 'heart-outline', activeIcon: 'heart', route: '/favorites' },
-        { name: 'add', icon: 'add', activeIcon: 'add', route: '/add-listing' }, // Add button
-        { name: 'chat', icon: 'chatbox-ellipses-outline', activeIcon: 'chatbox-ellipses', route: '/chat' },
-        { name: 'person', icon: 'person-outline', activeIcon: 'person', route: '/profile' },
+    const tabs: { name: string, icon: keyof typeof Ionicons.glyphMap, activeIcon: keyof typeof Ionicons.glyphMap, route: string, label: string }[] = [
+        { name: 'home', icon: 'home-outline', activeIcon: 'home', route: '/', label: 'Marketplace' },
+        { name: 'heart', icon: 'heart-outline', activeIcon: 'heart', route: '/favorites', label: 'Favorites' },
+        { name: 'add', icon: 'add', activeIcon: 'add', route: '/add-listing', label: '' }, // Add button
+        { name: 'dashboard', icon: 'briefcase-outline', activeIcon: 'briefcase', route: '/seller-dashboard', label: 'My Listings' },
+        { name: 'chat', icon: 'chatbox-ellipses-outline', activeIcon: 'chatbox-ellipses', route: '/chat', label: 'Chat' },
+        { name: 'person', icon: 'person-outline', activeIcon: 'person', route: '/profile', label: 'Profile' },
+
     ];
 
     return (
@@ -22,13 +40,15 @@ export default function BottomNavigation() {
                 // Render the add button differently
                 if (tab.name === 'add') {
                     return (
-                        <TouchableOpacity
-                            key={tab.name}
-                            style={styles.addButton}
-                            onPress={() => router.push(tab.route as any)}
-                        >
-                            <Ionicons name={tab.activeIcon} size={36} color="white" />
-                        </TouchableOpacity>
+                        <Animated.View key={tab.name} style={{ transform: [{ scale: scaleAnim }] }}>
+                            <TouchableOpacity
+                                style={styles.addButton}
+                                onPressIn={handlePressIn}
+                                onPressOut={() => handlePressOut(tab.route as any)}
+                            >
+                                <Ionicons name={tab.activeIcon} size={30} color="white" />
+                            </TouchableOpacity>
+                        </Animated.View>
                     );
                 }
 
@@ -41,9 +61,10 @@ export default function BottomNavigation() {
                     >
                         <Ionicons
                             name={pathname === tab.route ? tab.activeIcon : tab.icon}
-                            size={28}
+                            size={24}
                             color={pathname === tab.route ? '#000' : '#888'}
                         />
+                        <Text style={[styles.label, { color: pathname === tab.route ? '#000' : '#888' }]}>{tab.label}</Text>
                     </TouchableOpacity>
                 );
             })}
@@ -56,7 +77,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingVertical: 10,
+        paddingVertical: 8,
         backgroundColor: 'white',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
@@ -69,13 +90,13 @@ const styles = StyleSheet.create({
     tab: {
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 16,
+        padding: 6,
     },
     addButton: {
-        backgroundColor: '#FF4081',
-        width: 70,
-        height: 70,
-        borderRadius: 35,
+        backgroundColor: '#FF1493', // Bright pink
+        width: 65,
+        height: 60,
+        borderRadius: 20, // Less circular
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
@@ -83,6 +104,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 6,
         elevation: 5,
-        marginTop: -30, // Move it upward for prominence
+        marginTop: -12, // Slightly raised
+    },
+    label: {
+        fontSize: 10, // Smaller label
+        marginTop: 2,
+        fontWeight: 'bold',
     },
 });

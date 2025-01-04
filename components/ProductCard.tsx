@@ -2,15 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Listing } from '@/types';
 
-interface Product {
-    id: string;
-    ImageUrl: string;
-    title: string;
-    price: number;
-}
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product }: { product: Listing }) {
     const [liked, setLiked] = useState(false); // Track whether the product is liked
     const router = useRouter(); // Navigation hook
     return (
