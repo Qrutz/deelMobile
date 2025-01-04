@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import * as Location from 'expo-location';
-import { useCreateListing } from '../../hooks/useCreateListing';
+import { useCreateListing } from '../../hooks/ListingHooks/useCreateListing';
 import Constants from 'expo-constants';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text, View, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import ProductCard from '@/components/ProductCard';
-import { useFetchListings } from '@/hooks/useFetchListings';
+import { useFetchListings } from '@/hooks/ListingHooks/useFetchListings';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Marketplace() {

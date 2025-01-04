@@ -1,66 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth, useUser } from '@clerk/clerk-expo';
-
-
-
+import { useAuth } from '@clerk/clerk-expo';
 
 export default function ProfilePage() {
-    const { signOut } = useAuth();
-    const { user } = useUser();
+    const { signOut, getToken } = useAuth(); // Clerk auth
+    const [userData, setUserData] = useState<{
+        id: string;
+        name: string;
+        email: string;
+        phoneNumber: string | null;
+        profileImageUrl: string | null;
+        balance: number;
+        university: {
+            id: string;
+            name: string;
+        }
+        buildingName: string; // Added building
+    } | null>(null);
 
-    // State for buildings and selected building
-    const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([]);
-    const [selectedBuilding, setSelectedBuilding] = useState<string>("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Fetch buildings from the API
+    // Fetch user data from the /user/me endpoint
     useEffect(() => {
-        const fetchBuildings = async () => {
+        const fetchUserData = async () => {
             try {
-                const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/buildings`);
-                const data = await response.json();
-                setBuildings(data);
+                const token = await getToken();
+                const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/user/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
 
-                // Pre-select user's current building
-                const userBuildingId = user?.unsafeMetadata.buildingId as string;
-                setSelectedBuilding(userBuildingId || data[0]?.id.toString());
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user data');
+                }
+
+                const data = await response.json();
+                setUserData(data); // Set user data
             } catch (error) {
-                console.error('Error fetching buildings:', error);
+                console.error('Error fetching user data:', error);
+                Alert.alert('Error', 'Failed to fetch user data.');
+            } finally {
+                setLoading(false);
             }
         };
-        fetchBuildings();
+
+        fetchUserData();
     }, []);
-
-    // Handle building change
-    const changeBuilding = async () => {
-        if (!selectedBuilding || !user?.id) return;
-
-        setLoading(true);
-        try {
-            const response = await fetch(
-                `${process.env.EXPO_PUBLIC_API_BASE_URL}/buildings/${user?.id}/change-building`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ buildingId: selectedBuilding }),
-                }
-            );
-
-
-            if (response.ok) {
-                Alert.alert('Success', 'Building updated successfully!');
-            } else {
-                Alert.alert('Error', 'Failed to update building. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error changing building:', error);
-            Alert.alert('Error', 'Something went wrong.');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSignOut = async () => {
         try {
@@ -70,46 +59,43 @@ export default function ProfilePage() {
         }
     };
 
-    const settings = [
-        { name: 'Saldo', icon: 'wallet-outline' },
-        { name: 'Account', icon: 'person-circle-outline' },
-        { name: 'Privacy', icon: 'shield-checkmark-outline' },
-        { name: 'Notifications', icon: 'notifications-outline' },
-    ];
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.name}>{user?.emailAddresses[0].emailAddress}</Text>
-                <Text style={styles.subtitle}>Your Profile</Text>
+                <Image
+                    source={{ uri: userData?.profileImageUrl || 'https://via.placeholder.com/150' }}
+                    style={styles.profileImage}
+                />
+                <Text style={styles.name}>{userData?.name}</Text>
+                <Text style={styles.subtitle}>{userData?.email}</Text>
             </View>
 
-            {/* Settings List */}
-            <View style={styles.settingsContainer}>
-                {settings.map((item, index) => (
-                    <TouchableOpacity key={index} style={styles.settingItem}>
-                        <Ionicons name={item.icon as any} size={24} color="#555" />
-                        <Text style={styles.settingText}>{item.name}</Text>
-                        <Ionicons name="chevron-forward-outline" size={20} color="#ccc" />
-                    </TouchableOpacity>
-                ))}
+            {/* Balance */}
+            <View style={styles.infoContainer}>
+                <Ionicons name="wallet-outline" size={24} color="#4CAF50" />
+                <Text style={styles.infoText}>{userData?.balance.toFixed(2)} SEK</Text>
             </View>
 
-            {/* Building Selector */}
-            <Text style={styles.sectionTitle}>Change Building</Text>
+            {/* Campus */}
+            <View style={styles.infoContainer}>
+                <Ionicons name="school-outline" size={24} color="#4CAF50" />
+                <Text style={styles.infoText}>{userData?.university.name}</Text>
+            </View>
 
-            <TouchableOpacity
-                style={[styles.updateButton, loading && styles.disabledButton]}
-                onPress={changeBuilding}
-                disabled={loading}
-            >
-                {loading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.updateButtonText}>Update Building</Text>
-                )}
-            </TouchableOpacity>
+            {/* Building */}
+            <View style={styles.infoContainer}>
+                <Ionicons name="business-outline" size={24} color="#4CAF50" />
+                <Text style={styles.infoText}>{userData?.buildingName}</Text>
+            </View>
 
             {/* Sign-Out Button */}
             <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
@@ -130,6 +116,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 30,
     },
+    profileImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        marginBottom: 10,
+    },
     name: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -140,67 +132,35 @@ const styles = StyleSheet.create({
         color: '#555',
         marginTop: 5,
     },
-    settingsContainer: {
-        marginBottom: 20,
-    },
-    settingItem: {
+    infoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 15,
-        paddingHorizontal: 10,
-        backgroundColor: '#fff',
-        borderRadius: 8,
+        padding: 15,
         marginBottom: 10,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 3 },
-        shadowRadius: 5,
-        elevation: 3,
+        backgroundColor: '#E8F5E9',
+        borderRadius: 10,
     },
-    settingText: {
-        flex: 1,
+    infoText: {
         fontSize: 16,
-        color: '#333',
+        fontWeight: 'bold',
+        color: '#4CAF50',
         marginLeft: 10,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    buildingPickerContainer: {
-        marginBottom: 20,
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        padding: 10,
-    },
-    picker: {
-
-    },
-    updateButton: {
-        backgroundColor: '#4CAF50',
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    disabledButton: {
-        opacity: 0.6,
-    },
-    updateButtonText: {
-        fontSize: 16,
-        color: '#fff',
-        fontWeight: 'bold',
     },
     signOutButton: {
         backgroundColor: '#f06bb7',
         paddingVertical: 15,
         borderRadius: 8,
         alignItems: 'center',
+        marginTop: 20,
     },
     signOutText: {
         fontSize: 16,
         color: '#fff',
         fontWeight: 'bold',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

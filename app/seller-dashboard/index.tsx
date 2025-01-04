@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import ProductCard from '@/components/ProductCard';
-import { useFetchUserListings } from '@/hooks/useFetchMyListings';
+import { useFetchUserListings } from '@/hooks/ListingHooks/useFetchMyListings';
 
 export default function SellerDashboard() {
     const { data, isLoading, isError } = useFetchUserListings();
