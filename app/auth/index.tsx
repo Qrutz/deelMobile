@@ -5,6 +5,8 @@ import {
     StyleSheet,
     ImageBackground,
     TouchableOpacity,
+    Image,
+    Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient'; // Add Linear Gradient
 import { useRouter } from 'expo-router';
@@ -12,6 +14,21 @@ import { useRouter } from 'expo-router';
 export default function AuthScreen() {
 
     const router = useRouter();
+    const scaleAnim = new Animated.Value(1);
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 0.9,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+        }).start(() => router.push('/auth/sign-in'));
+    };
 
     return (
         <View style={styles.container}>
@@ -30,17 +47,20 @@ export default function AuthScreen() {
 
             {/* Text Content */}
             <View style={styles.content}>
-                <Text style={styles.title}>PASS THE TORCH!</Text>
-                <Text style={styles.subtitle}>WELCOME TO [APP NAME]</Text>
-                <Text style={styles.description}>
-                    Buy. Sell. Repeat The Magic.
-                </Text>
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => router.push('/auth/sign-in')}
-                >
-                    <Text style={styles.buttonText}>LOG IN</Text>
-                </TouchableOpacity>
+                <Image
+                    source={require('../../assets/logo.png')} // Replace with your logo path
+                    style={styles.logo}
+                />
+                <Text style={styles.subtitle}>WELCOME TO DEEL</Text>
+                <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPressIn={handlePressIn}
+                        onPressOut={handlePressOut}
+                    >
+                        <Text className='' style={styles.buttonText}>Sign in</Text>
+                    </TouchableOpacity>
+                </Animated.View>
             </View>
         </View>
     );
@@ -53,7 +73,7 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         width: '100%',
-        height: '55%', // Image height
+        height: '50%', // Image height reduced slightly
         overflow: 'hidden',
     },
     image: {
@@ -74,28 +94,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'white',
     },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#000000',
-        marginBottom: 10,
-    },
     subtitle: {
-        fontSize: 16,
+        fontSize: 18, // Slightly larger subtitle
         color: '#777777',
-        marginBottom: 5,
-    },
-    description: {
-        fontSize: 14,
-        color: '#555555',
-        textAlign: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
     },
     button: {
-        backgroundColor: '#E91E63',
-        paddingVertical: 12,
-        paddingHorizontal: 32,
-        borderRadius: 25,
+        backgroundColor: '#8E44AD', // Updated to purple
+        paddingVertical: 15,
+        paddingHorizontal: 40,
+        borderRadius: 30,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
@@ -106,5 +114,10 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: '600',
+    },
+    logo: {
+        width: 150, // Reduced size
+        height: 90, // Reduced size
+        marginBottom: 25, // More spacing below logo
     },
 });

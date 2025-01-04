@@ -66,7 +66,7 @@ export default function Page() {
             {/* Footer Links */}
             <View style={styles.footer}>
                 <Text style={styles.footerText}>Don't have an account?</Text>
-                <Link href="/sign-up" style={styles.link}>
+                <Link href="/auth/sign-up" style={styles.link}>
                     <Text style={styles.linkText}>Sign Up</Text>
                 </Link>
             </View>
