@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } fr
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 
-import { Dropdown } from 'react-native-element-dropdown';
 
 
 
@@ -99,13 +98,7 @@ export default function ProfilePage() {
 
             {/* Building Selector */}
             <Text style={styles.sectionTitle}>Change Building</Text>
-            <Dropdown
-                data={buildings.map((building) => ({ label: building.name, value: building.id.toString() }))}
-                value={selectedBuilding}
-                onChange={(value) => setSelectedBuilding(value.value)}
-                labelField={'label'}
-                valueField={'value'}
-            />
+
             <TouchableOpacity
                 style={[styles.updateButton, loading && styles.disabledButton]}
                 onPress={changeBuilding}
