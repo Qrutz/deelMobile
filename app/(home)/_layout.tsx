@@ -82,11 +82,11 @@ export default function HomeLayout() {
                     {/* Background Image */}
                     <View style={styles.imageContainer}>
                         <ImageBackground
-                            source={require('../../assets/images/landing-page-image.jpg')} // Replace with your image path
+                            source={require('../../assets/images/landing-page-image.jpg')}
                             style={styles.image}
                         >
                             <LinearGradient
-                                colors={['transparent', 'white']} // Gradient for fade effect
+                                colors={['transparent', 'white']}
                                 style={styles.gradient}
                             />
                         </ImageBackground>
@@ -95,19 +95,30 @@ export default function HomeLayout() {
                     {/* Content */}
                     <View style={styles.content}>
                         <Image
-                            source={require('../../assets/logo.png')} // Replace with your logo path
+                            source={require('../../assets/logo.png')}
                             style={styles.logo}
                         />
-                        <Text style={styles.subtitle}>WELCOME TO DEEL</Text>
-                        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                        <Text style={styles.title}>Welcome to Deel</Text>
+                        <Text style={styles.subtitle}>
+                            Connect with your campus and start trading today!
+                        </Text>
+
+                        {/* Buttons */}
+                        <View style={styles.buttonContainer}>
                             <TouchableOpacity
-                                style={styles.button}
-                                onPressIn={handlePressIn}
-                                onPressOut={handlePressOut}
+                                style={[styles.button, styles.signInButton]}
+                                onPress={() => router.push('/(auth)/sign-in')}
                             >
-                                <Text style={styles.buttonText}>Sign in</Text>
+                                <Text style={styles.buttonText}>Sign In</Text>
                             </TouchableOpacity>
-                        </Animated.View>
+
+                            <TouchableOpacity
+                                style={[styles.button, styles.signUpButton]}
+                                onPress={() => router.push('/(auth)/sign-up')}
+                            >
+                                <Text style={styles.buttonText}>Sign Up</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </SignedOut>
@@ -151,31 +162,50 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'white',
     },
+    logo: {
+        width: 150,
+        height: 90,
+        marginBottom: 15,
+    },
+    title: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
     subtitle: {
-        fontSize: 18,
-        color: '#777777',
-        marginBottom: 20,
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 25,
+    },
+    buttonContainer: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
     },
     button: {
-        backgroundColor: '#8E44AD',
+        flex: 1,
         paddingVertical: 15,
-        paddingHorizontal: 40,
         borderRadius: 30,
+        alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
+        marginHorizontal: 10,
+    },
+    signInButton: {
+        backgroundColor: '#8E44AD',
+    },
+    signUpButton: {
+        backgroundColor: '#4CAF50',
     },
     buttonText: {
         color: 'white',
         fontSize: 16,
         fontWeight: '600',
     },
-    logo: {
-        width: 150,
-        height: 90,
-        marginBottom: 25,
-    },
 });
-
