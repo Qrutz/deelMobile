@@ -9,9 +9,11 @@ import {
     Alert,
     Image,
     Animated,
+    Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
+import LottieView from 'lottie-react-native';
 
 export default function StudentHousingScreen() {
     const router = useRouter();
@@ -89,7 +91,6 @@ export default function StudentHousingScreen() {
 
             if (!response.ok) throw new Error('Failed to save housing');
 
-            Alert.alert('Success', 'Housing selection saved!');
             router.push('/(onboarding)/Final'); // Move to preferences step
         } catch (error) {
             console.error('Error updating housing:', error);
@@ -120,7 +121,20 @@ export default function StudentHousingScreen() {
     if (livesInHousing === null) {
         return (
             <View style={styles.container}>
+                {/* Lottie Animation */}
+                {Platform.OS !== 'web' && (
+                    <LottieView
+                        source={require('@/assets/lottie/idkmane.json')} // Replace with your animation path
+                        autoPlay
+                        loop
+                        style={styles.animation}
+                    />
+                )}
+
                 <Text style={styles.title}>Do you live in student housing?</Text>
+                <Text style={styles.description}>
+                    Connect with your campus and discover student housing options nearby.
+                </Text>
                 <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                     <TouchableOpacity
                         style={[styles.button, styles.yesButton]}
@@ -258,5 +272,17 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+
+    description: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 30,
+    },
+    animation: {
+        width: 300,
+        height: 300,
+        marginBottom: 20,
     },
 });
