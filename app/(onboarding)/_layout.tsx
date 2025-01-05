@@ -1,4 +1,4 @@
-import { Redirect, Slot } from 'expo-router';
+import { Redirect, Slot, Stack } from 'expo-router';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useEffect, useState } from 'react';
 
@@ -29,5 +29,14 @@ export default function OnboardingLayout() {
     }
 
     // Default case - Show onboarding steps
-    return <Slot />;
+    return (
+        <Stack
+            screenOptions={{
+                headerShown: false, // Enable header for back navigation
+                animation: 'slide_from_right', // Smooth slide animation
+                gestureEnabled: true, // Enable swipe gestures
+            }}
+        />
+    );
+
 }

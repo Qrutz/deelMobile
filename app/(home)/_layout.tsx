@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     Image,
     Animated,
+    Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Slot, useRouter, usePathname } from 'expo-router';
@@ -25,19 +26,31 @@ export default function HomeLayout() {
 
     // Check if user is onboarded
     useEffect(() => {
-        if (isSignedIn && user) {
-            const onboarded = user.publicMetadata?.isOnboarded === true; // Check Clerk metadata
-            setIsOnboarded(onboarded);
-            setLoading(false);
+        const checkOnboarding = () => {
+            if (isSignedIn && user) {
+                const onboarded = user.publicMetadata?.isOnboarded === true;
+                setIsOnboarded(onboarded);
+                setLoading(false);
 
-            // Redirect to onboarding if not onboarded
-            if (!onboarded) {
-                router.replace('/(onboarding)/onboarding');
+                if (!onboarded) {
+                    // Use timeout or immediate to fix race condition
+                    if (Platform.OS === 'ios') {
+                        setTimeout(() => {
+                            router.replace('/(onboarding)/onboarding');
+                        }, 1); // Small delay for iOS
+                    } else {
+                        setImmediate(() => {
+                            router.replace('/(onboarding)/onboarding');
+                        }); // Immediate for Android
+                    }
+                }
+            } else {
+                setLoading(false);
             }
-        } else {
-            setLoading(false);
-        }
-    }, [isSignedIn, user]);
+        };
+
+        checkOnboarding();
+    }, [isSignedIn, user]); // Depend on auth and user state
 
     if (loading) {
         return (
