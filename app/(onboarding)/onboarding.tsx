@@ -1,5 +1,6 @@
 
 
+import UniversityScreen from '@/screens/UniversityOnboard';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -45,14 +46,7 @@ const WelcomeScreen = ({ onNext }) => {
     );
 }
 
-const UniversityScreen = ({ onNext }) => {
-    return (
-        <View>
-            <Text>Choose your university</Text>
-            <Button title="Next" onPress={onNext} />
-        </View>
-    );
-}
+
 
 const ProfileScreen = ({ onNext }) => {
     return (
