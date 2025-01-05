@@ -16,7 +16,14 @@ export default function ProfilePage() {
             id: string;
             name: string;
         }
-        buildingName: string; // Added building
+        Studenthousing: {
+            id: number;
+            name: string;
+            latitude: number;
+            longitude: number;
+            chatId: string | null;
+            cityId: number;
+        }
     } | null>(null);
 
     const [loading, setLoading] = useState(true);
@@ -94,7 +101,7 @@ export default function ProfilePage() {
             {/* Building */}
             <View style={styles.infoContainer}>
                 <Ionicons name="business-outline" size={24} color="#4CAF50" />
-                <Text style={styles.infoText}>{userData?.buildingName}</Text>
+                <Text style={styles.infoText}>{userData?.Studenthousing.name}</Text>
             </View>
 
             {/* Sign-Out Button */}

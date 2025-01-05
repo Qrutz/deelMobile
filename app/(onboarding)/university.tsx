@@ -57,7 +57,7 @@ export default function UniversityScreen() {
             <Button
                 title="Next"
                 onPress={() => {
-                    router.push('/(onboarding)/Final');
+                    router.push('/(onboarding)/studenthousing');
                 }}
             />
         </View>
