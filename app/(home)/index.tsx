@@ -7,11 +7,11 @@ import { Ionicons } from '@expo/vector-icons';
 export default function Marketplace() {
     const categories = ['Electronics', 'Textbooks', 'Furniture', 'Clothing', 'Accessories'];
     const { data: products, isLoading, isError } = useFetchListings();
-    const [filterMode, setFilterMode] = useState<'building' | 'nearby'>('building'); // State to toggle proximity filters
+    const [filterMode, setFilterMode] = useState<'building' | 'nearby'>('building');
 
     if (isLoading) {
         return (
-            <View className="flex-1 justify-center items-center">
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
@@ -19,8 +19,8 @@ export default function Marketplace() {
 
     if (isError) {
         return (
-            <View className="flex-1 justify-center items-center">
-                <Text className="text-lg font-bold text-red-500">Failed to load listings</Text>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: 'red' }}>Failed to load listings</Text>
             </View>
         );
     }
@@ -30,73 +30,49 @@ export default function Marketplace() {
     };
 
     return (
-        <View className="flex-1 bg-white">
+        <View style={{ flex: 1, backgroundColor: 'white' }}>
             {/* Header */}
-            <View className="px-6 py-4 pt-12 bg-white">
-                <View className="flex-row justify-between items-center">
+            <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, backgroundColor: 'white' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View>
-                        <Text className="text-lg font-bold text-gray-900">Hello, Johan</Text>
-                        <Text className="text-sm text-gray-500 mt-1">Explore {filterMode === 'building' ? 'same building deals' : 'nearby listings'}</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>Hello, Johan</Text>
+                        <Text style={{ fontSize: 14, color: '#666', marginTop: 4 }}>
+                            Explore {filterMode === 'building' ? 'same building deals' : 'nearby listings'}
+                        </Text>
                     </View>
-                    <View className="flex-row items-center gap-2">
-                        {/* Search Icon */}
-                        <TouchableOpacity
-                            onPress={() => Alert.alert('Search', 'Search functionality coming soon!')}
-                            className="bg-gray-100 p-2 rounded-lg"
-                        >
-                            <Ionicons name="search-outline" size={20} color="black" />
-                        </TouchableOpacity>
-                        {/* Toggle Button */}
-                        <TouchableOpacity
-                            className="flex-row items-center bg-gray-100 py-2 px-4 rounded-full"
-                            onPress={toggleFilterMode}
-                        >
-                            <Ionicons name="location-outline" size={16} color="black" />
-                            <Text className="text-sm font-semibold text-gray-800 ml-2">
-                                {filterMode === 'building' ? 'Building' : 'Nearby'}
-                            </Text>
-                        </TouchableOpacity>
-
-
-                    </View>
+                    <TouchableOpacity onPress={toggleFilterMode} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="location-outline" size={16} color="black" />
+                        <Text style={{ marginLeft: 8, fontSize: 14, fontWeight: 'bold' }}>
+                            {filterMode === 'building' ? 'Building' : 'Nearby'}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </View>
 
             {/* Categories */}
-            <View className="h-12 mt-4">
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 10 }}
-                >
-                    {categories.map((category, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            className="bg-gray-200 py-1 px-3 rounded-full mr-2"
-                        >
-                            <Text className="text-sm font-semibold text-gray-700">{category}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
-
-            {/* Proximity Banner */}
-            <View className="bg-green-100 py-3 px-6 my-2 mx-4 rounded-lg">
-                <Text className="text-sm text-gray-700">
-                    {filterMode === 'building'
-                        ? 'Showing listings available in your building.'
-                        : 'Showing listings within 500 meters.'}
-                </Text>
-            </View>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 8 }}
+            >
+                {categories.map((category, index) => (
+                    <TouchableOpacity
+                        key={index}
+                        style={{ backgroundColor: '#EEE', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 16, marginRight: 8 }}
+                    >
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#555' }}>{category}</Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
 
             {/* Product Grid */}
             <FlatList
                 data={products}
                 keyExtractor={(item) => item.id.toString()}
                 numColumns={2}
-                contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10 }}
+                contentContainerStyle={{ padding: 10 }}
                 renderItem={({ item }) => (
-                    <View className="flex-1 py-2">
+                    <View style={{ flex: 1, padding: 8 }}>
                         <ProductCard product={{ ...item, proximity: filterMode === 'building' ? 'Same Building' : '500 meters away' }} />
                     </View>
                 )}
