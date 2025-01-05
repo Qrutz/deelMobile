@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useFetchListing } from '../../hooks/ListingHooks/useFetchListing';
+import { useFetchListing } from '../../../hooks/ListingHooks/useFetchListing';
 import { useCreateChat } from '@/hooks/ChatHooks/useCreateChat';
 import { useUser } from '@clerk/clerk-expo';
 

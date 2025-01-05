@@ -1,7 +1,9 @@
 
 
+import { useAuth } from '@clerk/clerk-expo';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react'
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 
 export default function Index() {
     const steps = ['Welcome', 'University', 'Profile', 'Housing', 'Preferences', 'Finish'];
@@ -80,9 +82,41 @@ const PreferencesScreen = ({ onNext }) => {
 }
 
 const FinishScreen = () => {
+    const { getToken } = useAuth();
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+
+    const completeOnboarding = async () => {
+        setLoading(true);
+        try {
+            const token = await getToken(); // Fetch Clerk token
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/user/onboard`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`, // Include bearer token
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                Alert.alert('Success', 'Onboarding completed successfully!');
+                router.replace('/'); // Redirect to home after success
+            } else {
+                Alert.alert('Error', 'Failed to complete onboarding.');
+            }
+        } catch (error) {
+            console.error('Onboarding error:', error);
+            Alert.alert('Error', 'Something went wrong.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <View>
+        <View style={styles.container}>
             <Text>Thank you for signing up!</Text>
+            <Button title="Finish" onPress={completeOnboarding} disabled={loading} />
+            {loading && <ActivityIndicator size="large" color="#4CAF50" />}
         </View>
     );
-}
+};

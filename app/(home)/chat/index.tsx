@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useFetchChats } from '../../hooks/ChatHooks/useFetchChats';
 import { useUser } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
 import { io } from 'socket.io-client';
+import { useFetchChats } from '@/hooks/ChatHooks/useFetchChats';
 
 // Initialize socket
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
