@@ -179,7 +179,7 @@ export default function StudentHousingScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
+        padding: 40, // Increased padding
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f9f9f9',
@@ -191,8 +191,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     button: {
-        paddingVertical: 15,
-        paddingHorizontal: 30,
+        paddingVertical: 10, // Reduced vertical padding
+        paddingHorizontal: 50, // Increased horizontal padding
         borderRadius: 30,
         marginVertical: 10,
         alignItems: 'center',
@@ -242,13 +242,15 @@ const styles = StyleSheet.create({
     },
     confirmButton: {
         marginTop: 20,
-        paddingVertical: 15,
+        paddingVertical: 10, // Reduced vertical padding
+        paddingHorizontal: 50, // Increased horizontal padding
         backgroundColor: '#4CAF50',
         borderRadius: 8,
         alignItems: 'center',
     },
     confirmButtonText: {
         fontSize: 16,
+        padding: 10,
         color: 'white',
         fontWeight: 'bold',
     },
