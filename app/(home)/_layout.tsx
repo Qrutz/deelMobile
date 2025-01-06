@@ -9,11 +9,14 @@ import {
     Image,
     Animated,
     Platform,
+    AppState,
+    AppStateStatus,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Slot, useRouter, usePathname } from 'expo-router';
 import { SignedIn, SignedOut, useAuth, useUser } from '@clerk/clerk-expo';
 import BottomNavigation from '@/components/BottomNavigation';
+import socket from '@/utils/socket';
 
 export default function HomeLayout() {
     const router = useRouter();
@@ -23,6 +26,37 @@ export default function HomeLayout() {
 
     const [loading, setLoading] = useState(true);
     const [isOnboarded, setIsOnboarded] = useState(false);
+
+    useEffect(() => {
+        if (isSignedIn) {
+            // Connect socket only when signed in
+            socket.connect();
+
+            socket.on('connect', () => {
+                console.log('Socket connected:', socket.id);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Socket disconnected');
+            });
+
+            // Handle app state changes
+            const handleAppStateChange = (state: AppStateStatus) => {
+                if (state === 'active' && !socket.connected) {
+                    socket.connect();
+                }
+            };
+
+            // Use the new listener with a subscription object
+            const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+            // Cleanup on unmount
+            return () => {
+                socket.disconnect(); // Disconnect socket
+                subscription.remove(); // Remove the AppState listener
+            };
+        }
+    }, [isSignedIn]);
 
     // Check if user is onboarded
     useEffect(() => {

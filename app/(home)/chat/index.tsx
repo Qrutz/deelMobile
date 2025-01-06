@@ -1,14 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+    View,
+    FlatList,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
-import { io } from 'socket.io-client';
 import { useFetchChats } from '@/hooks/ChatHooks/useFetchChats';
-
-// Initialize socket
-const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
-const socket = io(API_URL);
+import socket from '@/utils/socket'; // Use the shared socket instance
 
 const ChatList = () => {
     const router = useRouter();
@@ -23,8 +26,8 @@ const ChatList = () => {
         // Request permission for notifications
         Notifications.requestPermissionsAsync();
 
-        // Listen for incoming notifications
-        socket.on('notifyMessage', async ({ chatId, content, senderName }) => {
+        // Listen for incoming notifications (socket already connected in layout)
+        const handleNotification = async ({ chatId, content, senderName }: any) => {
             await Notifications.scheduleNotificationAsync({
                 content: {
                     title: `${senderName} sent a message`,
@@ -32,10 +35,13 @@ const ChatList = () => {
                 },
                 trigger: null, // Show immediately
             });
-        });
+        };
 
+        socket.on('notifyMessage', handleNotification);
+
+        // Cleanup on unmount
         return () => {
-            socket.off('notifyMessage'); // Cleanup socket listener
+            socket.off('notifyMessage', handleNotification); // Unsubscribe from event
         };
     }, []);
 

@@ -9,14 +9,12 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
+    Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { io } from 'socket.io-client';
 import { useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-
-const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!; // Backend URL
-const socket = io(API_URL); // Initialize socket connection
+import socket from '@/utils/socket'; // Import shared socket instance
 
 export default function ChatRoom() {
     const { id: chatId } = useLocalSearchParams(); // Chat ID from URL params
@@ -35,25 +33,21 @@ export default function ChatRoom() {
         socket.emit('joinChat', { chatId, userId: user.id });
 
         // Fetch chat details for the header (chat name)
-        fetch(`${API_URL}/chats/${chatId}`)
+        fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/chats/${chatId}`)
             .then((res) => res.json())
-            .then((chat) => setChatName(chat.isGroup ? chat.name : chat.members.find((m: any) => m.userId !== user.id)?.user?.name))
-            .catch((err) => console.error('Failed to fetch chat details:', err));
+            .then((chat) =>
+                setChatName(
+                    chat.isGroup
+                        ? chat.name
+                        : chat.members.find((m: any) => m.userId !== user.id)?.user?.name || 'Unknown'
+                )
+            )
+            .catch((err) => {
+                console.error('Failed to fetch chat details:', err);
+                Alert.alert('Error', 'Could not load chat details.');
+            });
 
-        // Listen for new messages
-        socket.on('newMessage', (msg) => {
-            setMessages((prev) => [
-                ...prev,
-                {
-                    id: msg.id,
-                    text: msg.content,
-                    sender: msg.senderId === user.id ? 'You' : 'Them',
-                    timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                },
-            ]);
-        });
-
-        // Fetch existing messages when joining
+        // Fetch chat history
         socket.emit('fetchMessages', { chatId });
 
         socket.on('chatHistory', (chatHistory) => {
@@ -61,19 +55,44 @@ export default function ChatRoom() {
                 id: msg.id,
                 text: msg.content,
                 sender: msg.senderId === user.id ? 'You' : 'Them',
-                timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }),
             }));
             setMessages(formattedMessages);
             setLoading(false);
         });
 
-        // Handle errors
-        socket.on('error', (err) => {
-            console.error('Socket Error:', err.message);
-        });
+        // Listen for new messages
+        const handleNewMessage = (msg: any) => {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: msg.id,
+                    text: msg.content,
+                    sender: msg.senderId === user.id ? 'You' : 'Them',
+                    timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    }),
+                },
+            ]);
+        };
+        socket.on('newMessage', handleNewMessage);
 
+        // Error handling
+        const handleError = (err: any) => {
+            console.error('Socket Error:', err.message);
+            Alert.alert('Error', 'A problem occurred while connecting to the chat.');
+        };
+        socket.on('error', handleError);
+
+        // Cleanup
         return () => {
-            socket.disconnect(); // Clean up socket connection
+            socket.off('newMessage', handleNewMessage); // Remove event listener
+            socket.off('error', handleError);
+            socket.emit('leaveChat', { chatId, userId: user.id }); // Leave the chat when unmounting
         };
     }, [chatId, user?.id]);
 
@@ -90,6 +109,7 @@ export default function ChatRoom() {
         }
     };
 
+    // Loading state
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -122,7 +142,12 @@ export default function ChatRoom() {
                 data={messages}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <View style={[styles.messageContainer, item.sender === 'You' ? styles.outgoing : styles.incoming]}>
+                    <View
+                        style={[
+                            styles.messageContainer,
+                            item.sender === 'You' ? styles.outgoing : styles.incoming,
+                        ]}
+                    >
                         <Text style={styles.messageText}>{item.text}</Text>
                         <Text style={styles.timestamp}>{item.timestamp}</Text>
                     </View>
@@ -166,7 +191,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     incoming: { backgroundColor: '#F1F1F1', alignSelf: 'flex-start' },
-    outgoing: { backgroundColor: '#4CAF50', alignSelf: 'flex-end', color: 'white' },
+    outgoing: { backgroundColor: '#4CAF50', alignSelf: 'flex-end' },
     messageText: { fontSize: 16, color: '#333' },
     timestamp: { fontSize: 12, color: '#888', marginTop: 5, alignSelf: 'flex-end' },
     inputContainer: { flexDirection: 'row', alignItems: 'center', padding: 10, borderTopWidth: 1, borderTopColor: '#ddd' },
