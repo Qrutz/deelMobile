@@ -1,111 +1,92 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Text,
     View,
     StyleSheet,
     Dimensions,
-    Image,
-    Animated,
-    PanResponder,
+    TouchableOpacity,
+    TextInput,
+    FlatList,
+    Image
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Swiper from '@/components/Swiper';
+import { useFetchListings } from '@/hooks/ListingHooks/useFetchListings'
+import { Listing } from '@/types';
+import ProductCard from '@/components/ProductCard';
+import { useUser } from '@clerk/clerk-expo';
 
 const { width, height } = Dimensions.get('window');
 
 export default function Marketplace() {
-    const [cards, setCards] = useState([
-        { id: '1', name: 'Atomic Ski boots', price: '$32', image: 'https://via.placeholder.com/150' },
-        { id: '2', name: 'Snowboard Jacket', price: '$50', image: 'https://via.placeholder.com/150' },
-        { id: '3', name: 'Winter Gloves', price: '$15', image: 'https://via.placeholder.com/150' },
-    ]);
+    const [filterMode, setFilterMode] = useState<'proximity' | 'category'>('proximity');
+    const [search, setSearch] = useState('');
+    const { user } = useUser();
+    const { data: listings, isLoading, error } = useFetchListings();
 
-    const position = useRef(new Animated.ValueXY()).current;
-    const scale = useRef(new Animated.Value(0.95)).current;
-
-    const rotate = position.x.interpolate({
-        inputRange: [-width / 2, 0, width / 2],
-        outputRange: ['-10deg', '0deg', '10deg'],
-    });
-
-    const opacity = scale.interpolate({
-        inputRange: [0.95, 1],
-        outputRange: [0.8, 1],
-        extrapolate: 'clamp',
-    });
-
-    const panResponder = PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderMove: (_, gesture) => {
-            position.setValue({ x: gesture.dx, y: gesture.dy });
-        },
-        onPanResponderRelease: (_, gesture) => {
-            const swipeThreshold = 60;
-
-            if (gesture.dx > swipeThreshold) {
-                Animated.parallel([
-                    Animated.spring(position, {
-                        toValue: { x: width + 100, y: gesture.dy },
-                        useNativeDriver: false,
-                    }),
-                    Animated.spring(scale, {
-                        toValue: 1,
-                        useNativeDriver: false,
-                    }),
-                ]).start(() => removeCard());
-            } else if (gesture.dx < -swipeThreshold) {
-                Animated.parallel([
-                    Animated.spring(position, {
-                        toValue: { x: -width - 100, y: gesture.dy },
-                        useNativeDriver: false,
-                    }),
-                    Animated.spring(scale, {
-                        toValue: 1,
-                        useNativeDriver: false,
-                    }),
-                ]).start(() => removeCard());
-            } else {
-                Animated.spring(position, {
-                    toValue: { x: 0, y: 0 },
-                    useNativeDriver: false,
-                }).start();
-            }
-        },
-    });
-
-    const removeCard = () => {
-        position.setValue({ x: 0, y: 0 });
-        scale.setValue(0.95);
-        setCards((prevCards) => prevCards.slice(1));
+    const toggleFilterMode = () => {
+        setFilterMode(filterMode === 'proximity' ? 'category' : 'proximity');
     };
+
+    if (isLoading) {
+        return <Text>Loading...</Text>;
+    }
+
+    if (error) {
+        return <Text>Error loading listings</Text>;
+    }
+
+
+    const filteredListings = listings?.filter((item: Listing) =>
+        item.title.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
         <View style={styles.container}>
-            {cards.length > 1 && (
-                <Animated.View
-                    style={[styles.card, styles.tiltedCard, { transform: [{ scale: scale }], opacity: opacity }]}
-                >
-                    <Image source={{ uri: cards[1].image }} style={styles.image} />
-                    <Animated.Text style={[styles.title, { opacity }]}>{cards[1].name}</Animated.Text>
-                    <Animated.Text style={[styles.price, { opacity }]}>{cards[1].price}</Animated.Text>
-                </Animated.View>
-            )}
+            {/* Header */}
+            <View style={styles.headerContainer}>
+                <View>
+                    <Text style={styles.headerTitle}>👋 Hi {user?.firstName}!</Text>
+                    <Text style={styles.headerSubtitle}>
+                        {filterMode === 'proximity' ? 'Proximity Deals' : 'Category Listings'}
+                    </Text>
+                </View>
+                <TouchableOpacity onPress={toggleFilterMode} style={styles.filterToggle}>
+                    <Ionicons name="options-outline" size={16} color="black" />
+                    <Text style={styles.filterText}>{filterMode === 'proximity' ? 'Category' : 'Proximity'}</Text>
+                </TouchableOpacity>
+            </View>
 
-            {cards.length > 0 && (
-                <Animated.View
-                    {...panResponder.panHandlers}
-                    style={[
-                        styles.card,
-                        {
-                            transform: [
-                                ...position.getTranslateTransform(),
-                                { rotate: rotate },
-                            ],
-                        },
-                    ]}
-                >
-                    <Image source={{ uri: cards[0].image }} style={styles.image} />
-                    <Text style={styles.title}>{cards[0].name}</Text>
-                    <Text style={styles.price}>{cards[0].price}</Text>
-                </Animated.View>
+            {filterMode === 'proximity' ? (
+                // Proximity View with Swiper
+                <View style={styles.swiperContainer}>
+                    <Swiper products={listings!} />
+                </View>
+            ) : (
+                // Category View'
+                <View style={styles.categoryContainer}>
+                    <View style={styles.searchBarContainer}>
+                        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Search for products..."
+                            value={search}
+                            onChangeText={setSearch}
+                        />
+                    </View>
+                    <FlatList
+                        data={filteredListings}
+                        keyExtractor={(item) => item.id.toString()}
+                        numColumns={2}
+                        contentContainerStyle={styles.gridContainer}
+                        renderItem={({ item }) => (
+                            <View style={styles.grid}>
+
+                                <ProductCard product={item} />
+                            </View>
+                        )}
+                    />
+                </View>
             )}
         </View>
     );
@@ -114,38 +95,109 @@ export default function Marketplace() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
+        backgroundColor: '#f8f8f8',
+    },
+    headerContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 12,
+        paddingBottom: 8,
+        backgroundColor: 'white',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
     },
-    card: {
-        width: width * 0.9,
-        height: height * 0.6,
-        padding: 20,
-        justifyContent: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        position: 'absolute',
-    },
-    tiltedCard: {
-        transform: [{ rotate: '-5deg' }],
-    },
-    image: {
-        width: '100%',
-        height: 200,
-        borderRadius: 10,
-    },
-    title: {
+    headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginTop: 10,
+        color: '#333',
     },
-    price: {
-        fontSize: 18,
+    headerSubtitle: {
+        fontSize: 14,
+        color: '#666',
+        marginTop: 4,
+    },
+    filterToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#e0e0e0',
+        padding: 8,
+        borderRadius: 8,
+    },
+    filterText: {
+        marginLeft: 8,
+        fontSize: 14,
         fontWeight: 'bold',
-        marginTop: 10,
+        color: '#333',
+    },
+    swiperContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 16,
+    },
+    categoryContainer: {
+        flex: 1,
+        padding: 16,
+    },
+    searchBarContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#ccc',
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    input: {
+        flex: 1,
+        height: 50,
+        fontSize: 16,
+        color: '#333',
+    },
+    gridContainer: {
+        paddingHorizontal: 10,
+        paddingTop: 10,
+    },
+    gridItem: {
+        flex: 1,
+        margin: 10,
+        height: 200,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+    },
+    gridImage: {
+        width: '100%',
+        height: '70%',
+        borderRadius: 10,
+    },
+    text: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 8,
+        color: '#333',
+    },
+    grid: {
+        flex: 1,
+        gap: 10,
+        justifyContent: 'space-around',
+        display: 'flex',
+        borderRadius: 10,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
     },
 });
