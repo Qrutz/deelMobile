@@ -41,6 +41,7 @@ const ProductCard = ({
     }
 
     return (
+
         <View style={styles.cardContainer}>
             {/* Full-bleed image (no padding). Covers entire card. */}
             <Image source={{ uri: listing.ImageUrl }} style={styles.image} />
@@ -52,7 +53,11 @@ const ProductCard = ({
                     <Text style={styles.title} numberOfLines={1}>
                         {listing.title}
                     </Text>
-                    <Text style={styles.price}>{listing.price}</Text>
+
+                    {/* Price text with emphasis */}
+                    <View style={styles.priceWrapper}>
+                        <Text style={styles.price}>{listing.price}</Text>
+                    </View>
                 </View>
 
                 {/* Distance or "Same Building" label (if any) */}
@@ -74,8 +79,6 @@ const ProductCard = ({
 export default ProductCard;
 
 const styles = StyleSheet.create({
-    // This outer container is typically placed inside an Animated.View in your Swiper,
-    // but here we ensure the image fills it completely.
     cardContainer: {
         flex: 1,
         // If you're applying a borderRadius in the Swiper, apply the same radius here
@@ -94,8 +97,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        // Try a translucent black background or a fade gradient
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)', // or a gradient
         paddingHorizontal: 12,
         paddingVertical: 8,
     },
@@ -114,10 +116,26 @@ const styles = StyleSheet.create({
         color: '#fff',
         marginRight: 8,
     },
+
+    /**
+     * This wrapper is optional if you want to add 
+     * a highlight background behind the price.
+     */
+    priceWrapper: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+    },
+
     price: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#ffeb3b', // bright color for price
+        fontSize: 22,
+        fontWeight: '800',
+        color: '#ffeb3b',
+        // Optional text shadow to make it "pop"
+        textShadowColor: 'rgba(0,0,0,0.7)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
 
     // Distance or "Same Building"
