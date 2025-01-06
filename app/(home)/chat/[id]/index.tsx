@@ -122,6 +122,8 @@ export default function ChatRoom() {
         <KeyboardAvoidingView
             style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={55} // iOS specific offset
+
         >
             {/* Header */}
             <View style={styles.header}>
