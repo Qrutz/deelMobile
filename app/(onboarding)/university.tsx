@@ -76,7 +76,7 @@ export default function UniversityScreen() {
                 <Button
                     title="Yes, this is correct"
                     onPress={() => {
-                        router.push('/(onboarding)/studenthousing');
+                        router.push('/(onboarding)/personal');
                     }}
                     color="#4CAF50"
                 />
