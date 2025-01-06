@@ -8,7 +8,7 @@ import {
     Animated,
     PanResponder,
 } from 'react-native';
-import { useRouter } from 'expo-router'; // or your nav method
+import { useRouter } from 'expo-router';
 import { Listing } from '@/types';
 import ProductCard from './SwiperProductCard';
 
@@ -19,57 +19,47 @@ const TAP_THRESHOLD = 10; // movement in px to consider it a "tap"
 const Swiper = ({ products }: { products: Listing[] }) => {
     const [cards, setCards] = useState(products);
 
-    const router = useRouter();  // or navigation from react-navigation
+    const router = useRouter();
 
     const position = useRef(new Animated.ValueXY()).current;
     const secondCardScale = useRef(new Animated.Value(0.95)).current;
 
+    // For rotation interpolation
     const rotate = position.x.interpolate({
         inputRange: [-width / 2, 0, width / 2],
         outputRange: ['-10deg', '0deg', '10deg'],
     });
 
-    // We'll store the initial touch-down coordinates
+    // Track the initial touch-down
     const touchDown = useRef({ x: 0, y: 0 });
 
     const panResponder = PanResponder.create({
         onStartShouldSetPanResponder: () => true,
-
-        // Called when the user first touches down:
         onPanResponderGrant: (_, gestureState) => {
             touchDown.current = { x: gestureState.x0, y: gestureState.y0 };
         },
-
-        // Called for every move:
         onPanResponderMove: (_, gesture) => {
             position.setValue({ x: gesture.dx, y: gesture.dy });
-
-            // Animate second card's scale
+            // Animate the second card's scale as user drags
             const dragDistance = Math.abs(gesture.dx);
             const newScale = 0.95 + (dragDistance / (width * 0.5)) * 0.05;
             secondCardScale.setValue(Math.min(newScale, 1));
         },
-
-        // Called when the user releases:
         onPanResponderRelease: (_, gesture) => {
             const { dx, dy } = gesture;
-            const totalDist = Math.sqrt(dx * dx + dy * dy);
+            const distMoved = Math.sqrt(dx * dx + dy * dy);
 
-            // 1) Check if it's basically a TAP (small movement)
-            if (totalDist < TAP_THRESHOLD) {
-                // => Navigate instead of swipe
+            // 1) TAP check
+            if (distMoved < TAP_THRESHOLD) {
                 const topCard = cards[cards.length - 1];
                 if (topCard) {
-                    // e.g. router.push(`/product/${topCard.id}`)
                     router.push(`/product/${topCard.id}`);
                 }
-
-                // Also reset position
+                // Reset after tap
                 Animated.spring(position, {
                     toValue: { x: 0, y: 0 },
                     useNativeDriver: false,
                 }).start(() => {
-                    // revert secondCardScale too
                     Animated.spring(secondCardScale, {
                         toValue: 0.95,
                         useNativeDriver: false,
@@ -78,7 +68,7 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                 return;
             }
 
-            // 2) If not a tap, check if the user swiped beyond threshold
+            // 2) SWIPE check
             if (Math.abs(dx) > SWIPE_THRESHOLD) {
                 // Animate out
                 Animated.timing(position, {
@@ -90,7 +80,7 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                     useNativeDriver: false,
                 }).start(() => removeTopCard());
             } else {
-                // Reset
+                // Reset if not swiped far enough
                 Animated.spring(position, {
                     toValue: { x: 0, y: 0 },
                     useNativeDriver: false,
@@ -104,13 +94,11 @@ const Swiper = ({ products }: { products: Listing[] }) => {
     });
 
     const removeTopCard = () => {
+        // 1) Remove the last card
+        setCards((prev) => prev.slice(0, prev.length - 1));
+        // 2) Then reset animations
         position.setValue({ x: 0, y: 0 });
         secondCardScale.setValue(0.95);
-
-        setCards((prev) => {
-            // remove last item
-            return prev.slice(0, prev.length - 1);
-        });
     };
 
     const renderCards = () => {
@@ -118,8 +106,13 @@ const Swiper = ({ products }: { products: Listing[] }) => {
             const isTop = index === cards.length - 1;
             const isSecond = index === cards.length - 2;
 
+            // We'll also define zIndex: top card > second card > others
+            let zIndex = 0;
+            if (isTop) zIndex = 2;
+            else if (isSecond) zIndex = 1;
+
             if (isTop) {
-                // Top card (draggable / tappable)
+                // Top card (draggable)
                 return (
                     <Animated.View
                         key={card.id}
@@ -127,6 +120,7 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                         style={[
                             styles.card,
                             {
+                                zIndex, // ensure top is on top
                                 transform: [
                                     ...position.getTranslateTransform(),
                                     { rotate },
@@ -138,7 +132,7 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                     </Animated.View>
                 );
             } else if (isSecond) {
-                // Second card, scales up as user drags
+                // Second card (scales up a bit)
                 return (
                     <Animated.View
                         key={card.id}
@@ -146,6 +140,7 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                         style={[
                             styles.card,
                             {
+                                zIndex,
                                 transform: [{ scale: secondCardScale }],
                             },
                         ]}
@@ -154,7 +149,7 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                     </Animated.View>
                 );
             } else {
-                // Third or deeper
+                // Third or deeper card
                 const offsetFromTop = cards.length - 1 - index;
                 const stackedScale = 0.95 - 0.03 * offsetFromTop;
                 const translateY = -10 * offsetFromTop;
@@ -166,6 +161,7 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                         style={[
                             styles.card,
                             {
+                                zIndex,
                                 transform: [{ scale: stackedScale }, { translateY }],
                             },
                         ]}
@@ -182,7 +178,6 @@ const Swiper = ({ products }: { products: Listing[] }) => {
 
 export default Swiper;
 
-// Style definitions
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -196,10 +191,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 15,
         overflow: 'hidden',
-        // if you want a shadow
+        // Shadow for iOS
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
+        // Elevation for Android
+        elevation: 5,
     },
 });
