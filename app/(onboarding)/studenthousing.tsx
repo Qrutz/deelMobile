@@ -75,6 +75,7 @@ export default function StudentHousingScreen() {
         try {
             const token = await getToken();
 
+            // Update housing info in the database
             const response = await fetch(
                 `${process.env.EXPO_PUBLIC_API_BASE_URL}/user/housing`,
                 {
@@ -84,17 +85,37 @@ export default function StudentHousingScreen() {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        StudenthousingId: livesInHousing ? selectedHousing : null, // Set null if no housing
+                        StudenthousingId: livesInHousing ? selectedHousing : null,
                     }),
                 }
             );
 
             if (!response.ok) throw new Error('Failed to save housing');
 
-            router.push('/(onboarding)/Final'); // Move to preferences step
+            // Join chatroom for selected student housing
+            if (livesInHousing && selectedHousing) {
+                const chatResponse = await fetch(
+                    `${process.env.EXPO_PUBLIC_API_BASE_URL}/chats/join`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            studenthousingId: selectedHousing, // Pass housing ID
+                        }),
+                    }
+                );
+
+                if (!chatResponse.ok) throw new Error('Failed to join chatroom');
+            }
+
+            // Move to final step
+            router.push('/(onboarding)/Final');
         } catch (error) {
-            console.error('Error updating housing:', error);
-            Alert.alert('Error', 'Could not update housing.');
+            console.error('Error during submission:', error);
+            Alert.alert('Error', 'Could not save housing or join chat.');
         } finally {
             setLoading(false);
         }
