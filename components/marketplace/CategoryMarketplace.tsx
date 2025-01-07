@@ -1,9 +1,11 @@
+// CategoryMarketplace.tsx
 import React from 'react';
 import {
     View,
     FlatList,
     TextInput,
     StyleSheet,
+    Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ProductCard from '@/components/ProductCard';
@@ -15,18 +17,24 @@ interface CategoryMarketplaceProps {
     setSearch: (value: string) => void;
 }
 
+const { width } = Dimensions.get('window');
+// A bit of math to control item width for 2 columns
+// so they don't get cut off or have weird spacing
+const ITEM_HORIZONTAL_MARGIN = 8;
+const TOTAL_HORIZONTAL_MARGIN = ITEM_HORIZONTAL_MARGIN * 2 * 2; // 2 items, each with left/right margin
+const cardWidth = (width - TOTAL_HORIZONTAL_MARGIN) / 2;
+
 const CategoryMarketplace: React.FC<CategoryMarketplaceProps> = ({
     listings,
     search,
     setSearch,
 }) => {
-    // Filter the listings when searching
     const filteredListings = listings?.filter((item: Listing) =>
         item.title.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
-        <View style={styles.categoryContainer}>
+        <View style={styles.container}>
             {/* Search Bar */}
             <View style={styles.searchBarContainer}>
                 <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
@@ -37,14 +45,15 @@ const CategoryMarketplace: React.FC<CategoryMarketplaceProps> = ({
                     onChangeText={setSearch}
                 />
             </View>
-            {/* Listings in a grid */}
+
+            {/* 2-Column Grid */}
             <FlatList
                 data={filteredListings}
                 keyExtractor={(item) => item.id.toString()}
                 numColumns={2}
                 contentContainerStyle={styles.gridContainer}
                 renderItem={({ item }) => (
-                    <View style={styles.gridItem}>
+                    <View style={[styles.gridItem, { width: cardWidth }]}>
                         <ProductCard product={item} />
                     </View>
                 )}
@@ -56,9 +65,10 @@ const CategoryMarketplace: React.FC<CategoryMarketplaceProps> = ({
 export default CategoryMarketplace;
 
 const styles = StyleSheet.create({
-    categoryContainer: {
+    container: {
         flex: 1,
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingBottom: 16,
     },
     searchBarContainer: {
         flexDirection: 'row',
@@ -80,20 +90,11 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     gridContainer: {
-        paddingHorizontal: 10,
-        paddingTop: 10,
+        paddingVertical: 10,
     },
     gridItem: {
-        flex: 1,
-        margin: 10,
-        height: 200,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
+        marginHorizontal: ITEM_HORIZONTAL_MARGIN,
+        marginBottom: 16,
+        // no fixed height: let ProductCard define its own size
     },
 });
