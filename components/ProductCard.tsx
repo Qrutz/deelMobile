@@ -49,50 +49,51 @@ export default function ProductCard({ product }: { product: Listing }) {
     );
 }
 
+// Just replace your styling with this snippet
+
 const styles = StyleSheet.create({
     cardContainer: {
-        // We handle outer margin in CategoryMarketplace gridItem
-        // So let's not add extra margin here
         width: '100%',
     },
     card: {
-        backgroundColor: '#fff',
-        borderRadius: 8,
+        backgroundColor: '#FCE5FF', // Deeper pastel-lavender/pink for clearer contrast
+        borderRadius: 12,
         overflow: 'hidden',
-        // Shadow can be subtle in a grid
+        // More pronounced shadow
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
     },
     imageContainer: {
         position: 'relative',
     },
     image: {
         width: '100%',
-        height: 140, // You can tweak this as needed
-
+        height: 140,
     },
     heartButton: {
         position: 'absolute',
-        top: 8,
-        right: 8,
-        backgroundColor: 'rgba(255,255,255,0.7)',
-        borderRadius: 12,
+        top: 10,
+        right: 10,
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        borderRadius: 16,
         padding: 6,
     },
     textContainer: {
-        padding: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
     },
     title: {
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: '600',
-        color: '#333',
+        color: '#4A4A4A',
+        marginBottom: 4,
     },
     price: {
-        marginTop: 4,
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#4CAF50',
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#FF6F9C', // Fun pink accent
     },
 });
+

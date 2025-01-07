@@ -10,6 +10,7 @@ import {
     ScrollView,
     Animated,
     Easing,
+    Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -19,11 +20,12 @@ import ProductCard from '@/components/ProductCard';
 
 const CATEGORIES = [
     { label: 'All', icon: 'apps' },
-    { label: 'Textbooks', icon: 'book' },
+    { label: 'Textbooks', icon: 'book-outline' },
     { label: 'Electronics', icon: 'laptop-outline' },
     { label: 'Clothing', icon: 'shirt-outline' },
-    { label: 'Sports', icon: 'basketball-outline' },
-    { label: 'Music', icon: 'musical-notes-outline' },
+    { label: 'Kitchenware', icon: 'restaurant-outline' },
+    { label: 'Other', icon: 'cube-outline' },
+
 ];
 
 const { width } = Dimensions.get('window');
@@ -113,7 +115,11 @@ export default function Marketplace() {
         <View style={styles.container}>
             {/* 1) Minimal Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Marketplace</Text>
+                <Image
+                    source={require('@/assets/logo.png')}
+                    style={{ width: 60, height: 40, resizeMode: 'contain' }}
+                />
+
                 <View style={styles.headerRight}>
                     {/* 2) Lightning Icon with Glow */}
                     <TouchableOpacity onPress={handleLightningPress} style={styles.iconButton}>
