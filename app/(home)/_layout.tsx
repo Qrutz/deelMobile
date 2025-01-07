@@ -13,12 +13,14 @@ import {
     AppStateStatus,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Slot, useRouter, usePathname } from 'expo-router';
+import { Slot, useRouter, usePathname, Stack } from 'expo-router';
 import { SignedIn, SignedOut, useAuth, useUser } from '@clerk/clerk-expo';
 import BottomNavigation from '@/components/BottomNavigation';
 import socket from '@/utils/socket';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function HomeLayout() {
+
+export default function HomeStack() {
     const router = useRouter();
     const { isSignedIn } = useAuth();
     const pathname = usePathname();
@@ -27,36 +29,6 @@ export default function HomeLayout() {
     const [loading, setLoading] = useState(true);
     const [isOnboarded, setIsOnboarded] = useState(false);
 
-    useEffect(() => {
-        if (isSignedIn) {
-            // Connect socket only when signed in
-            socket.connect();
-
-            socket.on('connect', () => {
-                console.log('Socket connected:', socket.id);
-            });
-
-            socket.on('disconnect', () => {
-                console.log('Socket disconnected');
-            });
-
-            // Handle app state changes
-            const handleAppStateChange = (state: AppStateStatus) => {
-                if (state === 'active' && !socket.connected) {
-                    socket.connect();
-                }
-            };
-
-            // Use the new listener with a subscription object
-            const subscription = AppState.addEventListener('change', handleAppStateChange);
-
-            // Cleanup on unmount
-            return () => {
-                socket.disconnect(); // Disconnect socket
-                subscription.remove(); // Remove the AppState listener
-            };
-        }
-    }, [isSignedIn]);
 
     // Check if user is onboarded
     useEffect(() => {
@@ -88,42 +60,34 @@ export default function HomeLayout() {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
+            <View>
                 <ActivityIndicator size="large" color="#4CAF50" />
             </View>
         );
     }
 
-    // Animation for button scaling
-    const scaleAnim = new Animated.Value(1);
 
-    const handlePressIn = () => {
-        Animated.spring(scaleAnim, {
-            toValue: 0.9,
-            useNativeDriver: true,
-        }).start();
-    };
-
-    const handlePressOut = () => {
-        Animated.spring(scaleAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-        }).start(() => router.push('/(auth)/sign-in'));
-    };
 
     return (
-        <>
-            <SignedIn>
-                <View style={styles.container}>
-                    <View style={styles.contentContainer}>
-                        <Slot />
-                    </View>
-                    {!pathname.startsWith('/chat/') && !pathname.startsWith('/product/') && (
-                        <BottomNavigation />
-                    )}
-                </View>
-            </SignedIn>
+        <><SignedIn>
+            <Stack
+                screenOptions={{
+                    gestureEnabled: true,
+                    headerShown: false,
+                }}
+            >
+                <Stack.Screen name="(tabs)" />
+                {/*
 
+            {/*
+If you also have an “index.tsx” in (home), you can explicitly
+define it or rely on auto-resolving. If you define it, do:
+*/}
+
+
+            </Stack>
+
+        </SignedIn>
             <SignedOut>
                 <View style={styles.container}>
                     {/* Background Image */}
@@ -169,9 +133,13 @@ export default function HomeLayout() {
                     </View>
                 </View>
             </SignedOut>
+
+
         </>
+
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {

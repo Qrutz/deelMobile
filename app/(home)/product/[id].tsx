@@ -65,7 +65,7 @@ export default function ProductPage() {
                 <Text style={styles.errorText}>Failed to load listing</Text>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => router.push('/')}
+                    onPress={() => router.back()}
                 >
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
@@ -77,7 +77,7 @@ export default function ProductPage() {
     return (
         <View style={styles.container}>
             {/* Back Button */}
-            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                 <Ionicons name="arrow-back" size={24} color="black" />
             </TouchableOpacity>
 

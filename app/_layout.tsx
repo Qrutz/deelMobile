@@ -1,15 +1,18 @@
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import { ClerkProvider, ClerkLoaded, SignedIn } from '@clerk/clerk-expo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar, StyleSheet } from 'react-native';
 import { tokenCache } from '@/cache';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
   if (!publishableKey) throw new Error('Clerk key missing.');
+
+
 
   return (
     <QueryClientProvider client={queryClient}>
