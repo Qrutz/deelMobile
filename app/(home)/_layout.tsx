@@ -30,13 +30,29 @@ export default function HomeStack() {
     const [isOnboarded, setIsOnboarded] = useState(false);
 
     useEffect(() => {
-        if (isSignedIn) {
+        if (isSignedIn && user) {
+
+            socket.io.opts.query = { userId: user.id }; // Pass user ID to the server
+
             // Connect socket only when signed in
             socket.connect();
 
             socket.on('connect', () => {
-                console.log('Socket connected:', socket.id);
+                console.log('Socket connected as:', user.id);
             });
+
+
+            // // Global event for new messages
+            socket.on('notifyMessage', (msg) => {
+                console.log('New message received globally:', msg);
+
+                // Emit this event globally using EventEmitter or React Context (Optional)
+                // Replace this with your state management, notification system, etc.
+                // Example:
+                // notificationStore.addNotification(msg); // Pseudo code
+
+            });
+
 
             socket.on('disconnect', () => {
                 console.log('Socket disconnected');
@@ -56,6 +72,7 @@ export default function HomeStack() {
             return () => {
                 socket.disconnect(); // Disconnect socket
                 subscription.remove(); // Remove the AppState listener
+                socket.off('newMessage'); // Remove the event listener
             };
         }
     }, [isSignedIn]);
@@ -108,7 +125,10 @@ export default function HomeStack() {
                 }}
             >
 
+                <Stack.Screen name="modal" options={{
+                    presentation: 'fullScreenModal',
 
+                }} />
                 {/*
 
             {/*

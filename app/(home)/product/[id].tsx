@@ -26,26 +26,33 @@ export default function ProductPage() {
 
     // Start or fetch chat
     const startChat = async () => {
-        if (!user || !listing) {
-            Alert.alert('Error', 'User or listing data missing.');
-            return;
-        }
+        // if (!user || !listing) {
+        //     Alert.alert('Error', 'User or listing data missing.');
+        //     return;
+        // }
 
-        createChatMutation.mutate(
-            {
-                userId1: user.id, // Current user ID
-                userId2: listing.user.id, // Listing owner's ID
+        // createChatMutation.mutate(
+        //     {
+        //         userId1: user.id, // Current user ID
+        //         userId2: listing.user.id, // Listing owner's ID
+        //     },
+        //     {
+        //         onSuccess: (chat) => {
+        //             // Navigate to the chatroom with the chat ID
+        //             router.push(`/chat/${chat.id}`);
+        //         },
+        //         onError: () => {
+        //             Alert.alert('Error', 'Could not start chat. Please try again later.');
+        //         },
+        //     }
+        // );
+        router.push({
+            pathname: '/modal',
+            params: {
+                productId: listing?.id,
+                sellerId: listing?.user.id,
             },
-            {
-                onSuccess: (chat) => {
-                    // Navigate to the chatroom with the chat ID
-                    router.push(`/chat/${chat.id}`);
-                },
-                onError: () => {
-                    Alert.alert('Error', 'Could not start chat. Please try again later.');
-                },
-            }
-        );
+        })
     };
 
 

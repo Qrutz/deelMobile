@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     View,
     FlatList,
@@ -10,55 +10,90 @@ import {
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
-import { useFetchChats } from '@/hooks/ChatHooks/useFetchChats';
-import socket from '@/utils/socket'; // Use the shared socket instance
+import socket from '@/utils/socket'; // Shared socket instance
+
+interface Chat {
+    id: string;
+    isGroup: boolean;
+    name?: string;
+    members: Array<{ userId: string; user: { name: string } }>;
+    messages: Array<{ content: string; createdAt: string }>;
+}
 
 const ChatList = () => {
     const router = useRouter();
     const { user } = useUser(); // Current logged-in user
 
-    // Fetch chats using hook
-    const { data: chats, isLoading, isError } = useFetchChats(user?.id || '');
-
+    const [chats, setChats] = useState<Chat[]>([]); // State for chat list
+    const [loading, setLoading] = useState(true);  // Loading state
     const notificationListener = useRef<any>();
 
     useEffect(() => {
-        // Request permission for notifications
-        Notifications.requestPermissionsAsync();
+        if (!user?.id) return;
 
-        // Listen for incoming notifications (socket already connected in layout)
-        const handleNotification = async ({ chatId, content, senderName }: any) => {
-            await Notifications.scheduleNotificationAsync({
+        console.log('Fetching chats via socket...');
+        socket.emit('fetchChats', { userId: user.id }); // Fetch chats from server
+
+        // Receive initial chat list
+        socket.on('chatList', (fetchedChats: Chat[]) => {
+            console.log('Chats fetched:', fetchedChats);
+            setChats(fetchedChats); // Update state with fetched chats
+            setLoading(false); // Stop loading
+        });
+
+        // Handle incoming messages and dynamically update chat list
+        socket.on('notifyMessage', ({ chatId, content, senderName }) => {
+            console.log('New message received:', { chatId, content });
+
+            setChats((prevChats) => {
+                const updatedChats = [...prevChats];
+                const chatIndex = updatedChats.findIndex((chat) => chat.id === chatId);
+
+                if (chatIndex !== -1) {
+                    // Update the last message for an existing chat
+                    updatedChats[chatIndex] = {
+                        ...updatedChats[chatIndex],
+                        messages: [
+                            { content, createdAt: new Date().toISOString() },
+                            ...updatedChats[chatIndex].messages,
+                        ],
+                    };
+                } else {
+                    // Add a new chat dynamically if it doesn't exist
+                    updatedChats.unshift({
+                        id: chatId,
+                        isGroup: false,
+                        name: senderName,
+                        members: [],
+                        messages: [{ content, createdAt: new Date().toISOString() }],
+                    });
+                }
+
+                return updatedChats;
+            });
+
+            // Trigger notification
+            Notifications.scheduleNotificationAsync({
                 content: {
-                    title: `${senderName} sent a message`,
+                    title: `${senderName}`,
                     body: content,
                 },
                 trigger: null, // Show immediately
             });
-        };
-
-        socket.on('notifyMessage', handleNotification);
+        });
 
         // Cleanup on unmount
         return () => {
-            socket.off('notifyMessage', handleNotification); // Unsubscribe from event
+            socket.off('chatList');
+            socket.off('notifyMessage');
         };
-    }, []);
+    }, [user?.id]);
 
     // Loading state
-    if (isLoading) {
+    if (loading) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#4CAF50" />
-            </View>
-        );
-    }
-
-    // Error state
-    if (isError) {
-        return (
-            <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Failed to load chats. Please try again.</Text>
             </View>
         );
     }
@@ -82,7 +117,7 @@ const ChatList = () => {
                     // Handle group vs private chat
                     const isGroupChat = item.isGroup;
                     const chatName = isGroupChat
-                        ? item.name // Group chat uses the building name
+                        ? item.name // Group chat uses building name
                         : item.members.find((m) => m.userId !== user?.id)?.user?.name || 'Unknown User';
 
                     // Last message & timestamp
@@ -126,15 +161,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    errorText: {
-        fontSize: 16,
-        color: 'red',
     },
     emptyContainer: {
         flex: 1,
