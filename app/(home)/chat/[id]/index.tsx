@@ -127,7 +127,7 @@ export default function ChatRoom() {
         >
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push('/chat')}>
+                <TouchableOpacity onPress={() => router.back()}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
                 </TouchableOpacity>
                 <View>

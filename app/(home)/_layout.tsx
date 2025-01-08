@@ -29,6 +29,37 @@ export default function HomeStack() {
     const [loading, setLoading] = useState(true);
     const [isOnboarded, setIsOnboarded] = useState(false);
 
+    useEffect(() => {
+        if (isSignedIn) {
+            // Connect socket only when signed in
+            socket.connect();
+
+            socket.on('connect', () => {
+                console.log('Socket connected:', socket.id);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Socket disconnected');
+            });
+
+            // Handle app state changes
+            const handleAppStateChange = (state: AppStateStatus) => {
+                if (state === 'active' && !socket.connected) {
+                    socket.connect();
+                }
+            };
+
+            // Use the new listener with a subscription object
+            const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+            // Cleanup on unmount
+            return () => {
+                socket.disconnect(); // Disconnect socket
+                subscription.remove(); // Remove the AppState listener
+            };
+        }
+    }, [isSignedIn]);
+
 
     // Check if user is onboarded
     useEffect(() => {
@@ -76,7 +107,8 @@ export default function HomeStack() {
                     headerShown: false,
                 }}
             >
-                <Stack.Screen name="(tabs)" />
+
+
                 {/*
 
             {/*

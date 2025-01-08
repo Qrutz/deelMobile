@@ -21,12 +21,7 @@ export default function ProximityScreen() {
     return (
         <View style={styles.container}>
             {/* Custom header with a back button */}
-            <View style={styles.header}>
-                {/* <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
-                </TouchableOpacity> */}
-                <Text style={styles.headerTitle}>Proximity</Text>
-            </View>
+
 
             <View style={styles.swiperContainer}>
                 <Swiper products={listings as Listing[]} />
