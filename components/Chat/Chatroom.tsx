@@ -59,7 +59,7 @@ interface ChatDetails {
 
 interface ChatScreenBaseProps {
     /** If we already know the chatId: */
-    chatId?: string;
+    chatId: string;
 
     /** If we only know product & seller, we can fetch/create a chat: */
     productId?: string;
@@ -99,37 +99,6 @@ export default function ChatScreenBase({
 
         async function initChat() {
             let resolvedChatId = initialChatId;
-
-            // If no chatId, but productId & sellerId exist, fetch/create a new chat
-            if (!resolvedChatId && productId && sellerId) {
-                try {
-                    const resp = await fetch(
-                        `${process.env.EXPO_PUBLIC_API_BASE_URL}/chats/start`,
-                        {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                userId1: userId,
-                                userId2: sellerId,
-                            }),
-                        }
-                    );
-                    const data = await resp.json();
-                    if (!resp.ok) throw new Error(data.error || 'Failed to create chat');
-                    resolvedChatId = data.chatId;
-                } catch (error: any) {
-                    console.error('Error creating/fetching chat:', error.message);
-                    Alert.alert('Error', 'Could not load chat.');
-                    setLoading(false);
-                    return;
-                }
-            }
-
-            if (!resolvedChatId) {
-                console.error('No chatId or (productId & sellerId) provided!');
-                setLoading(false);
-                return;
-            }
 
             setChatId(resolvedChatId);
 

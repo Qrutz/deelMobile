@@ -11,9 +11,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchListing } from '../../../hooks/ListingHooks/useFetchListing';
-import { useCreateChat } from '@/hooks/ChatHooks/useCreateChat';
+import { StartChatResponse, useCreateChat } from '@/hooks/ChatHooks/useCreateChat';
 import { useUser } from '@clerk/clerk-expo';
-
 
 export default function ProductPage() {
     const { id } = useLocalSearchParams() as { id: string };
@@ -26,35 +25,34 @@ export default function ProductPage() {
 
     // Start or fetch chat
     const startChat = async () => {
-        // if (!user || !listing) {
-        //     Alert.alert('Error', 'User or listing data missing.');
-        //     return;
-        // }
+        if (!user || !listing) {
+            Alert.alert('Error', 'User or listing data missing.');
+            return;
+        }
 
-        // createChatMutation.mutate(
-        //     {
-        //         userId1: user.id, // Current user ID
-        //         userId2: listing.user.id, // Listing owner's ID
-        //     },
-        //     {
-        //         onSuccess: (chat) => {
-        //             // Navigate to the chatroom with the chat ID
-        //             router.push(`/chat/${chat.id}`);
-        //         },
-        //         onError: () => {
-        //             Alert.alert('Error', 'Could not start chat. Please try again later.');
-        //         },
-        //     }
-        // );
-        router.push({
-            pathname: '/modal',
-            params: {
-                productId: listing?.id,
-                sellerId: listing?.user.id,
+        createChatMutation.mutate(
+            {
+                userId1: user.id,
+                userId2: listing.user.id,
             },
-        })
+            {
+                onSuccess: (data: StartChatResponse) => {
+                    // data.chatId is the chat's ID from the server
+                    router.push({
+                        pathname: '/modal',
+                        params: {
+                            productId: listing.id,
+                            sellerId: listing.user.id,
+                            chatId: data.chatId,
+                        },
+                    });
+                },
+                onError: () => {
+                    Alert.alert('Error', 'Could not start chat. Please try again later.');
+                },
+            }
+        );
     };
-
 
     // Loading state
     if (isLoading) {
@@ -118,6 +116,7 @@ export default function ProductPage() {
                     <TouchableOpacity style={styles.buyButton}>
                         <Text style={styles.buyButtonText}>Buy now</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                         style={styles.chatButton}
                         onPress={startChat}
@@ -136,7 +135,6 @@ export default function ProductPage() {
 }
 
 const styles = StyleSheet.create({
-    // All previous styles
     container: {
         flex: 1,
         backgroundColor: '#fff',
