@@ -17,23 +17,55 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo'; // Pulling user info from Clerk
 import socket from '@/utils/socket';
+import UpgradedHeaderChat from './UpgradedHeaderChat';
 
-interface Message {
+/* ------------------ Type Definitions ------------------ */
+
+/** The shape of each message returned by your backend. */
+interface ChatMessage {
     id: string;
     content: string;
     senderId: string;
     createdAt: string;
+    sender?: {
+        id: string;
+        name: string;
+        avatarUrl?: string;
+        // Add more user fields if needed
+    };
 }
 
+/** The shape of each chat member, if your backend returns it. */
+interface ChatMember {
+    userId: string;
+    user: {
+        id: string;
+        name: string;
+        profileImageUrl?: string;
+        // Add more user fields if needed
+    };
+}
+
+/** The full chat details payload returned by socket `chatDetails` event. */
+interface ChatDetails {
+    id: string;
+    members: ChatMember[];
+    messages: ChatMessage[];
+    // If your chat also includes product info, add that here
+    // product?: { id: string; title: string; ... }
+}
+
+/* ------------------------------------------------------ */
+
 interface ChatScreenBaseProps {
-    // If we already know the chatId:
+    /** If we already know the chatId: */
     chatId?: string;
 
-    // If we only know product & seller, we can fetch/create a chat:
+    /** If we only know product & seller, we can fetch/create a chat: */
     productId?: string;
     sellerId?: string;
 
-    // If you want a custom back arrow handler (else uses router.back()):
+    /** If you want a custom back arrow handler (else uses router.back()): */
     onBackPress?: () => void;
 }
 
@@ -44,13 +76,14 @@ export default function ChatScreenBase({
     onBackPress,
 }: ChatScreenBaseProps) {
     const { user } = useUser(); // Current logged-in user from Clerk
-    const [chatId, setChatId] = useState<string | undefined>(initialChatId);
+    const [chatData, setChatData] = useState<ChatDetails | null>(null);
 
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [chatId, setChatId] = useState<string | undefined>(initialChatId);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
 
-    // 1) Ensure user is loaded; if not, show a spinner or return early
+    // If the user object isn't loaded yet, show a spinner
     if (!user) {
         return (
             <View style={styles.loadingContainer}>
@@ -60,7 +93,7 @@ export default function ChatScreenBase({
         );
     }
 
-    // 2) Initialize or fetch the chat
+    /* ------------------ Initialize / Fetch Chat ------------------ */
     useEffect(() => {
         const userId = user.id;
 
@@ -102,12 +135,21 @@ export default function ChatScreenBase({
 
             // Join the socket room
             socket.emit('joinChat', { chatId: resolvedChatId, userId });
+
+            // Request the full chat details (messages, members, etc.)
             socket.emit('fetchMessages', { chatId: resolvedChatId });
 
-            // Listen for the chat history
-            socket.on('chatHistory', (chatHistory: any[]) => {
-                setMessages(chatHistory);
+            // Listen for the chat details event
+            socket.on('chatDetails', (chatDetails: ChatDetails) => {
+                console.log('Chat details:', chatDetails);
+                // Update your messages from the returned details
+                setChatData(chatDetails);
+                setMessages(chatDetails.messages || []);
+
                 setLoading(false);
+                // If you want, you can store chatDetails in state
+                // to get other info (like members or product).
+                // e.g. setChatDetails(chatDetails);
             });
 
             // Listen for socket errors
@@ -123,25 +165,26 @@ export default function ChatScreenBase({
         return () => {
             if (chatId) {
                 socket.emit('leaveChat', { chatId, userId });
-                socket.off('chatHistory');
+                socket.off('chatDetails');
                 socket.off('error');
             }
         };
     }, [initialChatId, productId, sellerId, user]);
 
-    // 3) Listen for new messages
+    /* ------------------ Listen for new messages ------------------ */
     useEffect(() => {
-        const handleNewMessage = (msg: any) => {
+        const handleNewMessage = (msg: ChatMessage) => {
             setMessages((prev) => [...prev, msg]);
         };
 
         socket.on('newMessage', handleNewMessage);
+
         return () => {
             socket.off('newMessage', handleNewMessage);
         };
     }, []);
 
-    // 4) Send a new message
+    /* ------------------ Send a new message ------------------ */
     const sendMessage = () => {
         if (!message.trim() || !chatId || !user.id) return;
 
@@ -152,18 +195,18 @@ export default function ChatScreenBase({
             content: message,
         });
 
-        // Optional: optimistic UI update
-        const tempMsg: Message = {
-            id: Date.now().toString(),
-            content: message,
-            senderId: user.id,
-            createdAt: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, tempMsg]);
+        // // Optional: optimistic UI update
+        // const tempMsg: ChatMessage = {
+        //     id: Date.now().toString(),
+        //     content: message,
+        //     senderId: user.id,
+        //     createdAt: new Date().toISOString(),
+        // };
+        // setMessages((prev) => [...prev, tempMsg]);
         setMessage('');
     };
 
-    // 5) Loading state
+    /* ------------------ Loading State ------------------ */
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -172,20 +215,19 @@ export default function ChatScreenBase({
         );
     }
 
-    // 6) Render the main UI
+    /* ------------------ Render the main UI ------------------ */
     return (
         <KeyboardAvoidingView
             style={styles.flexContainer}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => (onBackPress ? onBackPress() : router.back())}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Chat</Text>
-                <Text style={styles.headerStatus}>online</Text>
-            </View>
+            {/* Use your upgraded chat header */}
+            <UpgradedHeaderChat
+                sellerName={chatData?.members[1].user.name || 'https://via.placeholder.com/150'}
+                sellerAvatar={chatData?.members[1].user.profileImageUrl || 'https://via.placeholder.com/150'}    // or an actual URL
+                isOnline={true}            // or a real condition
+                onBackPress={onBackPress}
+            />
 
             {/* Messages List */}
             <FlatList
@@ -194,10 +236,18 @@ export default function ChatScreenBase({
                 renderItem={({ item }) => {
                     const isOutgoing = item.senderId === user.id;
                     return (
-                        <View style={[styles.messageContainer, isOutgoing ? styles.outgoing : styles.incoming]}>
+                        <View
+                            style={[
+                                styles.messageContainer,
+                                isOutgoing ? styles.outgoing : styles.incoming,
+                            ]}
+                        >
                             <Text style={styles.messageText}>{item.content}</Text>
                             <Text style={styles.timestamp}>
-                                {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(item.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                })}
                             </Text>
                         </View>
                     );
@@ -221,7 +271,7 @@ export default function ChatScreenBase({
     );
 }
 
-// ------------------ Styles ------------------
+/* ------------------ Styles ------------------ */
 const styles = StyleSheet.create({
     flexContainer: {
         flex: 1,
@@ -231,27 +281,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-
-    // Header
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        backgroundColor: '#FFF',
-        borderBottomColor: '#ddd',
-        borderBottomWidth: 1,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: 10,
-        color: '#333',
-    },
-    headerStatus: {
-        marginLeft: 10,
-        fontSize: 13,
-        color: '#4CAF50',
     },
 
     // Messages
@@ -268,13 +297,13 @@ const styles = StyleSheet.create({
     },
     incoming: {
         alignSelf: 'flex-start',
-        backgroundColor: '#FCE5FF', // pastel lavender
-        borderTopLeftRadius: 0,     // optional bubble corner
+        backgroundColor: '#FCE5FF',
+        borderTopLeftRadius: 0, // optional bubble corner
     },
     outgoing: {
         alignSelf: 'flex-end',
-        backgroundColor: '#FFD4E5', // pastel pink
-        borderTopRightRadius: 0,    // optional bubble corner
+        backgroundColor: '#FFD4E5',
+        borderTopRightRadius: 0, // optional bubble corner
     },
     messageText: {
         fontSize: 15,
