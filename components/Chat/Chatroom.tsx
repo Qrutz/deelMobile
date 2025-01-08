@@ -18,6 +18,8 @@ import { router } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo'; // Pulling user info from Clerk
 import socket from '@/utils/socket';
 import UpgradedHeaderChat from './UpgradedHeaderChat';
+import ChatInputBar from './ChatInput';
+import ProductCardMessage from './ProductCardMessage';
 
 /* ------------------ Type Definitions ------------------ */
 
@@ -34,6 +36,17 @@ interface ChatMessage {
         // Add more user fields if needed
     };
 }
+
+interface Message {
+    id: string;
+    chatId: string;
+    senderId: string;
+    content: string;
+    type: string;       // "text" | "productCard"
+    listingId?: number; // if productCard
+    createdAt: string;
+}
+
 
 /** The shape of each chat member, if your backend returns it. */
 interface ChatMember {
@@ -153,28 +166,55 @@ export default function ChatScreenBase({
         };
     }, []);
 
-    /* ------------------ Send a new message ------------------ */
-    const sendMessage = () => {
-        if (!message.trim() || !chatId || !user.id) return;
 
-        // Emit to server
+    // 1) Handle normal text messages
+    const handleSendMessage = (text: string) => {
+        if (!text.trim() || !chatId || !user?.id) return;
+
         socket.emit('sendMessage', {
             chatId,
             senderId: user.id,
-            content: message,
+            content: text,
+            type: 'text',
         });
-
-        // // Optional: optimistic UI update
-        // const tempMsg: ChatMessage = {
-        //     id: Date.now().toString(),
-        //     content: message,
-        //     senderId: user.id,
-        //     createdAt: new Date().toISOString(),
-        // };
-        // setMessages((prev) => [...prev, tempMsg]);
-        setMessage('');
     };
 
+    // 2) Handle product card messages
+    const handleSendProductCard = (listingId: number) => {
+        if (!chatId || !user?.id) return;
+
+        socket.emit('sendMessage', {
+            chatId,
+            senderId: user.id,
+            type: 'productCard',
+            listingId,
+        });
+    };
+
+    // Render each message
+    const renderMessage = ({ item }: { item: Message }) => {
+        if (item.type === 'productCard') {
+            return (
+                <View style={[styles.messageBubble, styles.productCardBubble]}>
+                    {/* A specialized UI for product cards, e.g.: */}
+                    <ProductCardMessage listingId={item.listingId!} />
+                </View>
+            );
+        } else {
+            // normal text
+            const isOutgoing = item.senderId === user?.id;
+            return (
+                <View
+                    style={[
+                        styles.messageBubble,
+                        isOutgoing ? styles.outgoing : styles.incoming,
+                    ]}
+                >
+                    <Text style={styles.messageText}>{item.content}</Text>
+                </View>
+            );
+        }
+    };
     /* ------------------ Loading State ------------------ */
     if (loading) {
         return (
@@ -224,18 +264,11 @@ export default function ChatScreenBase({
                 contentContainerStyle={styles.messageList}
             />
 
-            {/* Input Row */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={message}
-                    onChangeText={setMessage}
-                    placeholder="Type a message..."
-                />
-                <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                    <Ionicons name="send" size={24} color="#4CAF50" />
-                </TouchableOpacity>
-            </View>
+            <ChatInputBar
+                onSendMessage={handleSendMessage}
+                onProposeDeal={handleSendProductCard}
+                sellerUserId={chatData?.members[1].userId!}
+            />
         </KeyboardAvoidingView>
     );
 }
@@ -309,4 +342,15 @@ const styles = StyleSheet.create({
     sendButton: {
         padding: 8,
     },
+    messageBubble: {
+        marginVertical: 6,
+        padding: 10,
+        borderRadius: 10,
+        maxWidth: '70%',
+    },
+    productCardBubble: {
+        backgroundColor: '#FFD6EC',
+    },
+
+
 });
