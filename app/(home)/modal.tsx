@@ -27,7 +27,11 @@ export default function Modal() {
 
 
     return (
-        <ChatScreen isModal productId={singleProductId} sellerId={singleSellerId} />
+        <SafeAreaView style={{ flex: 1 }}>
+
+            <ChatScreen productId={singleProductId} sellerId={singleSellerId} />
+        </SafeAreaView>
+
     );
 }
 
