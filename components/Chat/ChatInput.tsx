@@ -36,16 +36,24 @@ export default function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
     return (
         <View style={styles.container}>
             <Modal
+                transparent // annoying that overlay also slides down with modal but fix later : TODO
                 visible={showGifPicker}
                 animationType="slide"
-                collapsable={true}
-                presentationStyle="overFullScreen"
             >
-                <View style={styles.gifPickerContainer}>
-                    <GifPicker
-                        onSelectGif={handleSelectGif}
-                        onCancel={() => setShowGifPicker(false)}
+                <View style={styles.overlay}>
+                    {/* This is the clickable background to close the sheet */}
+                    <TouchableOpacity
+                        style={styles.overlayBackground}
+                        onPress={() => setShowGifPicker(false)}
                     />
+
+                    {/* Bottom sheet */}
+                    <View style={styles.bottomSheet}>
+                        <GifPicker
+                            onSelectGif={handleSelectGif}
+                            onCancel={() => setShowGifPicker(false)}
+                        />
+                    </View>
                 </View>
             </Modal>
 
@@ -76,7 +84,7 @@ export default function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
                     <Ionicons name="send" size={20} color="#fff" />
                 </TouchableOpacity>
             </View>
-        </View>
+        </View >
     );
 }
 
@@ -125,5 +133,21 @@ const styles = StyleSheet.create({
     gifPickerContainer: {
         flex: 1,
         marginTop: Platform.OS === 'android' ? 30 : 20,
+    },
+    overlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    overlayBackground: {
+        flex: 1,
+        // If you want it basically invisible, do 'transparent'.
+        // If you want a slightly dark background, do low alpha:
+        backgroundColor: 'rgba(0,0,0,0.1)',
+    },
+    bottomSheet: {
+        backgroundColor: '#fff',
+        height: '60%',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
     },
 });
