@@ -8,6 +8,7 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
+    Image,
 } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import socket from '@/utils/socket';
@@ -34,6 +35,7 @@ interface ChatMessage {
     content: string;
     // No more "type" since we only do text
     sender: User;
+    type: 'text' | 'gif';
 }
 
 interface ChatDetails {
@@ -126,7 +128,7 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
     }
 
     // Handle sending text messages
-    const handleSendMessage = (text: string) => {
+    const handleSendMessage = (text: string, type: 'text' | 'gif') => {
         if (!text.trim()) return;
 
         // Emit the message
@@ -134,6 +136,7 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
             chatId,
             senderId: currentUserId,
             content: text.trim(),
+            type,
         });
     };
 
@@ -141,12 +144,17 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
     const renderItem = ({ item }: { item: ChatMessage }) => {
         const isOutgoing = item.senderId === currentUserId;
 
+
+        const isGif = item.type === 'gif';
+
         return (
             <MessageBubble
                 content={item.content}
                 isOutgoing={isOutgoing}
+                isGif={isGif}
                 senderName={item.sender.name}
                 avatarUrl={item.sender.profileImageUrl!}
+
             />
         );
     };

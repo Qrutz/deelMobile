@@ -1,18 +1,21 @@
+// MessageBubble.tsx
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 interface MessageBubbleProps {
-    content: string;       // The message text
-    isOutgoing: boolean;   // True if currentUser is the sender
-    senderName: string;    // The sender's name (if needed)
-    avatarUrl?: string;    // Optional avatar URL
+    content: string;        // The message text or GIF URL
+    isOutgoing: boolean;    // True if currentUser is the sender
+    isGif?: boolean;        // True if this content is a GIF
+    avatarUrl?: string;     // Optional avatar URL
+    senderName?: string;    // For incoming/group messages
 }
 
 export default function MessageBubble({
     content,
     isOutgoing,
-    senderName,
+    isGif = false,
     avatarUrl,
+    senderName,
 }: MessageBubbleProps) {
     return (
         <View
@@ -21,85 +24,100 @@ export default function MessageBubble({
                 isOutgoing ? styles.containerOutgoing : styles.containerIncoming,
             ]}
         >
-            {/* Avatar on the left for incoming, on the right for outgoing */}
-            {!isOutgoing && avatarUrl ? (
+            {/* Avatar on the left if incoming, or on the right if row-reverse is used for outgoing */}
+            {avatarUrl && (
                 <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-            ) : null}
+            )}
 
             <View style={styles.bubbleColumn}>
-                {/* If you only want name for group or incoming, adapt condition here */}
-                {!isOutgoing && (
+                {/* Sender name (only for incoming typically) */}
+                {!isOutgoing && senderName ? (
                     <Text style={styles.senderName}>{senderName}</Text>
-                )}
+                ) : null}
 
-                {/* The bubble itself */}
+                {/* The bubble container */}
                 <View
                     style={[
                         styles.bubble,
                         isOutgoing ? styles.bubbleOutgoing : styles.bubbleIncoming,
+                        // If it's a GIF, apply a different style to reduce or remove padding
+                        isGif ? styles.noPadding : styles.withPadding,
                     ]}
                 >
-                    <Text style={styles.bubbleText}>{content}</Text>
+                    {isGif ? (
+                        <Image
+                            source={{ uri: content }}
+                            style={styles.gifImage}
+                            resizeMode="cover"
+                        />
+                    ) : (
+                        <Text style={styles.bubbleText}>{content}</Text>
+                    )}
                 </View>
             </View>
-
-            {isOutgoing && avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-            ) : null}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        // Provide some vertical spacing
-        marginVertical: 4,
-        alignItems: 'flex-end', // Align items at the bottom for consistent avatar/bubble alignment
+        marginVertical: 5,
+        alignItems: 'flex-end',
     },
-    // If it's outgoing, we want to reverse row so bubble + avatar go to the right
+    // Outgoing => row-reverse
     containerOutgoing: {
         flexDirection: 'row-reverse',
         justifyContent: 'flex-start',
-        // Because row-reverse automatically pushes main content to the left
-        // so the bubble will appear on the right side visually
     },
+    // Incoming => normal row
     containerIncoming: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
     },
 
-    // The column that holds the sender name + bubble
     bubbleColumn: {
-        maxWidth: '80%',
+        maxWidth: '75%', // bubble can't be wider than 75% of screen
     },
 
-    // Optional sender name label (usually for incoming messages or group)
     senderName: {
-        color: '#666',
         fontSize: 12,
+        color: '#666',
         marginBottom: 2,
     },
 
-    // The actual bubble
+    // Base bubble style
     bubble: {
         borderRadius: 12,
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        // We'll let the container handle left/right alignment
+        overflow: 'hidden', // if you want consistent rounding for images
     },
     bubbleOutgoing: {
-        backgroundColor: '#ffd4e5',
-        alignSelf: 'flex-end', // Ensures bubble is on the right column
+        backgroundColor: '#ffd4e5', // pastel pink
+        borderTopRightRadius: 0,
     },
     bubbleIncoming: {
-        backgroundColor: '#fce5ff',
-        alignSelf: 'flex-start', // Ensures bubble is on the left column
-    },
-    bubbleText: {
-        color: '#333',
+        backgroundColor: '#fce5ff', // pastel purple
+        borderTopLeftRadius: 0,
     },
 
-    // Avatar image
+    // Different padding for GIF vs. text
+    withPadding: {
+        padding: 8,
+    },
+    noPadding: {
+        padding: 0,
+    },
+
+    bubbleText: {
+        color: '#333',
+        fontSize: 15,
+    },
+    gifImage: {
+        width: 200,
+        height: 200,
+        // No padding around the image if 'noPadding' is applied
+    },
+
+    // Avatar
     avatar: {
         width: 36,
         height: 36,
