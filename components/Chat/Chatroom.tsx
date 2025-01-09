@@ -15,6 +15,7 @@ import socket from '@/utils/socket';
 import UpgradedHeaderChat from './UpgradedHeaderChat';
 import ChatInputBar from './ChatInput';
 import MessageBubble from './MessageBubble';
+import { User } from '@/types';
 
 
 interface ChatMember {
@@ -32,6 +33,7 @@ interface ChatMessage {
     createdAt: string;
     content: string;
     // No more "type" since we only do text
+    sender: User;
 }
 
 interface ChatDetails {
@@ -52,6 +54,8 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
     const [chatData, setChatData] = useState<ChatDetails | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(true);
+
+    console.log(messages);
 
     useEffect(() => {
         if (!user) return;
@@ -140,6 +144,8 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
             <MessageBubble
                 content={item.content}
                 isOutgoing={isOutgoing}
+                senderName={item.sender.name}
+                avatarUrl={item.sender.profileImageUrl!}
             />
         );
     };
