@@ -70,10 +70,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 40,
         backgroundColor: '#4CAF50',
         borderRadius: 30,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         elevation: 5,
     },
     buttonText: {

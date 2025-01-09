@@ -99,10 +99,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 40,
         borderRadius: 30,
         backgroundColor: '#4CAF50',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
         elevation: 5,
     },
     disabledButton: {

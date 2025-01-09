@@ -10,16 +10,18 @@ export interface StartChatResponse {
 }
 
 // The function that hits /chats/start
+// We'll add an optional `productData` param
 const createChat = async (
   userId1: string,
-  userId2: string
+  userId2: string,
+  productData?: any
 ): Promise<StartChatResponse> => {
   const response = await fetch(`${API_URL}/chats/start`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ userId1, userId2 }),
+    body: JSON.stringify({ userId1, userId2, productData }),
   });
 
   if (!response.ok) {
@@ -31,9 +33,16 @@ const createChat = async (
 };
 
 // Then the hook
+// We allow productData in our mutation's parameters
+interface CreateChatParams {
+  userId1: string;
+  userId2: string;
+  productData?: any;
+}
+
 export const useCreateChat = () => {
   return useMutation({
-    mutationFn: ({ userId1, userId2 }: { userId1: string; userId2: string }) =>
-      createChat(userId1, userId2),
+    mutationFn: ({ userId1, userId2, productData }: CreateChatParams) =>
+      createChat(userId1, userId2, productData),
   });
 };

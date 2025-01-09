@@ -133,9 +133,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: '#ffeb3b',
         // Optional text shadow to make it "pop"
-        textShadowColor: 'rgba(0,0,0,0.7)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
+
     },
 
     // Distance or "Same Building"

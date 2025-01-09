@@ -60,10 +60,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         overflow: 'hidden',
         // More pronounced shadow
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     },
     imageContainer: {
         position: 'relative',

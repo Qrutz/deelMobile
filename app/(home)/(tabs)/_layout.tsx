@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
 import React, { useRef } from 'react';
@@ -7,19 +7,9 @@ export default function TabLayout() {
     // Animation for scaling effect
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
-    const handlePressIn = () => {
-        Animated.spring(scaleAnim, {
-            toValue: 0.9,
-            useNativeDriver: true,
-        }).start();
-    };
 
-    const handlePressOut = () => {
-        Animated.spring(scaleAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-        }).start();
-    };
+
+
 
     return (
         <Tabs
@@ -65,20 +55,20 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="addListing"
                 options={{
-                    title: '', // Hide title
+                    title: '', // no tab title
                     tabBarIcon: () => (
                         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                             <TouchableOpacity
                                 style={styles.addButton}
-                                onPressIn={handlePressIn}
-                                onPressOut={handlePressOut}
+
+                                onPress={() => router.push('/addListing')}
                             >
                                 <Ionicons name="add" size={30} color="white" />
                             </TouchableOpacity>
                         </Animated.View>
                     ),
-                    tabBarLabelStyle: { display: 'none' }, // Hide label explicitly
-                    tabBarStyle: { display: 'none' }, // Hide tab bar styling for this button
+                    // Remove this line (or set it to an actual style instead of display:none)
+                    // tabBarStyle: { display: 'none' }
                 }}
             />
 
@@ -128,10 +118,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,           // Rounded corners
         borderTopRightRadius: 20,
         backgroundColor: '#fff',           // White background
-        shadowColor: '#000',               // Shadow color
-        shadowOffset: { width: 0, height: -2 }, // Drop shadow at the top
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', // Web shadow
         elevation: 5,                      // Android shadow
     },
     tabLabel: {
@@ -145,10 +132,7 @@ const styles = StyleSheet.create({
         borderRadius: 35,                  // Fully circular button
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',               // Button shadow
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
+        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', // Web elevation
         elevation: 5,                      // Android elevation
         marginBottom: 20,                  // Raise button above the bar
     },

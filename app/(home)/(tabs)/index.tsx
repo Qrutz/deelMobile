@@ -117,7 +117,8 @@ export default function Marketplace() {
             <View style={styles.header}>
                 <Image
                     source={require('@/assets/logo.png')}
-                    style={{ width: 60, height: 40, resizeMode: 'contain' }}
+                    style={{ width: 60, height: 40 }}
+                    resizeMode='contain'
                 />
 
                 <View style={styles.headerRight}>

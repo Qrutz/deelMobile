@@ -1,24 +1,34 @@
-// MessageBubble.tsx
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import ProductCardBubble from './ProductCardBubble';
 
 interface MessageBubbleProps {
-    content: string;        // The message text or GIF URL
-    isOutgoing: boolean;    // True if currentUser is the sender
-    isGif?: boolean;        // True if this content is a GIF
-    avatarUrl?: string;     // Optional avatar URL
-    senderName?: string;    // The sender’s display name (for incoming)
+    type: 'text' | 'gif' | 'productCard';
+    content?: string;
+    productData?: any;
+    isOutgoing: boolean;
+    senderName?: string;
+    avatarUrl?: string;
 }
 
 export default function MessageBubble({
+    type,
     content,
+    productData,
     isOutgoing,
-    isGif = false,
-    avatarUrl,
     senderName,
+    avatarUrl,
 }: MessageBubbleProps) {
-    // A small helper: show name only for incoming & if we have it
-    const showSenderName = (!isOutgoing && !!senderName);
+    // We'll remove the avatar if it's isOutgoing
+    const shouldShowAvatar = !isOutgoing && avatarUrl;
+
+    // Adjust bubble styles
+    const bubbleStyles = [
+        styles.bubble,
+        isOutgoing ? styles.bubbleOutgoing : styles.bubbleIncoming,
+        // If it's a GIF, remove the normal padding
+        type === 'gif' && styles.gifNoPadding,
+    ];
 
     return (
         <View
@@ -27,46 +37,28 @@ export default function MessageBubble({
                 isOutgoing ? styles.containerOutgoing : styles.containerIncoming,
             ]}
         >
-            {/* Avatar on the left if incoming, automatically on right if row-reverse (outgoing) */}
-            {avatarUrl && (
-                <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-            )}
+            {/* Only show avatar if it's an incoming message */}
+            {shouldShowAvatar && <Image source={{ uri: avatarUrl }} style={styles.avatar} />}
 
             <View style={styles.bubbleColumn}>
-                {/* 1) If it’s a GIF & incoming, place the name above or below the bubble */}
-                {showSenderName && isGif && (
-                    <Text style={styles.senderNameAboveGif}>{senderName}</Text>
+                {/* Sender name for incoming messages only */}
+                {!isOutgoing && senderName && (
+                    <Text style={styles.senderName}>{senderName}</Text>
                 )}
 
-                {/* 2) The main bubble */}
-                <View
-                    style={[
-                        styles.bubble,
-                        isOutgoing ? styles.bubbleOutgoing : styles.bubbleIncoming,
-                        isGif ? styles.noPadding : styles.withPadding,
-                    ]}
-                >
-                    {isGif ? (
+                <View style={bubbleStyles}>
+                    {type === 'productCard' && productData ? (
+                        <ProductCardBubble productData={productData} />
+                    ) : type === 'gif' && content ? (
                         <Image
                             source={{ uri: content }}
                             style={styles.gifImage}
                             resizeMode="cover"
                         />
                     ) : (
-                        <>
-                            {/* If it’s text & incoming, optionally show the name inside or above the bubble */}
-                            {showSenderName && !isGif && (
-                                <Text style={styles.senderNameInside}>{senderName}</Text>
-                            )}
-                            <Text style={styles.bubbleText}>{content}</Text>
-                        </>
+                        <Text style={styles.bubbleText}>{content}</Text>
                     )}
                 </View>
-
-                {/* 3) If you want the name *below* the GIF bubble instead, you could do: 
-            {showSenderName && isGif && <Text style={styles.senderNameBelowGif}>{senderName}</Text>} 
-            Just remove the “above” approach above and use this one.
-         */}
             </View>
         </View>
     );
@@ -75,7 +67,7 @@ export default function MessageBubble({
 const styles = StyleSheet.create({
     container: {
         marginVertical: 5,
-        alignItems: 'flex-end', // bubble & avatar align at bottom edge
+        alignItems: 'flex-end',
     },
     containerOutgoing: {
         flexDirection: 'row-reverse',
@@ -86,15 +78,19 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
     },
 
-    // Column for the bubble (plus optional name)
     bubbleColumn: {
         maxWidth: '75%',
     },
+    senderName: {
+        fontSize: 12,
+        color: '#666',
+        marginBottom: 2,
+    },
 
-    // The bubble itself
+    // Base bubble styling (with default padding)
     bubble: {
         borderRadius: 12,
-        overflow: 'hidden', // ensures bubble corners apply to GIF edges
+        padding: 8,
     },
     bubbleOutgoing: {
         backgroundColor: '#ffd4e5', // pastel pink
@@ -104,55 +100,26 @@ const styles = StyleSheet.create({
         backgroundColor: '#fce5ff', // pastel purple
         borderTopLeftRadius: 0,
     },
-
-    // If it’s text, add some normal padding
-    withPadding: {
-        padding: 8,
-    },
-    noPadding: {
-        padding: 0,
-    },
-
-    // Styles for the text bubble
     bubbleText: {
         color: '#333',
         fontSize: 15,
     },
 
-    // Sender name “inside” the text bubble
-    senderNameInside: {
-        fontSize: 12,
-        color: '#666',
-        marginBottom: 4,
+    // If we want no padding for GIF
+    gifNoPadding: {
+        padding: 0,
+    },
+    gifImage: {
+        width: 200,
+        height: 200,
+        borderRadius: 6,
     },
 
-    // If you want the name above the GIF (to avoid overlap)
-    senderNameAboveGif: {
-        fontSize: 12,
-        color: '#666',
-        marginBottom: 4,
-        // Maybe bold or different color if you prefer
-    },
-
-    // Or if you prefer placing name *below* the GIF bubble:
-    senderNameBelowGif: {
-        fontSize: 12,
-        color: '#666',
-        marginTop: 4,
-    },
-
-    // Avatar image
+    // Avatar styling
     avatar: {
         width: 36,
         height: 36,
         borderRadius: 18,
         marginHorizontal: 8,
-    },
-
-    // GIF image
-    gifImage: {
-        width: 200,
-        height: 200,
-        // No extra padding around the GIF
     },
 });

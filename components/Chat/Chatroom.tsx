@@ -35,7 +35,7 @@ interface ChatMessage {
     content: string;
     // No more "type" since we only do text
     sender: User;
-    type: 'text' | 'gif';
+    type: 'text' | 'gif' | 'productCard';
 }
 
 interface ChatDetails {
@@ -57,6 +57,7 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
     const [chatData, setChatData] = useState<ChatDetails | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(true);
+
 
     console.log(messages);
 
@@ -144,20 +145,50 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
     const renderItem = ({ item }: { item: ChatMessage }) => {
         const isOutgoing = item.senderId === currentUserId;
 
+        if (item.type === 'productCard') {
+            // Parse the JSON content
+            let productData: any;
+            try {
+                productData = JSON.parse(item.content);
+            } catch {
+                productData = {}; // fallback
+            }
 
-        const isGif = item.type === 'gif';
-
-        return (
-            <MessageBubble
-                content={item.content}
-                isOutgoing={isOutgoing}
-                isGif={isGif}
-                senderName={item.sender.name}
-                avatarUrl={item.sender.profileImageUrl!}
-
-            />
-        );
+            // Then pass a prop `isProductCard`
+            return (
+                <MessageBubble
+                    isOutgoing={isOutgoing}
+                    type="productCard"
+                    productData={productData}
+                    senderName={item.sender.name}
+                    avatarUrl={item.sender.profileImageUrl!}
+                />
+            );
+        } else if (item.type === 'gif') {
+            // existing logic
+            return (
+                <MessageBubble
+                    isOutgoing={isOutgoing}
+                    type="gif"
+                    content={item.content}
+                    senderName={item.sender.name}
+                    avatarUrl={item.sender.profileImageUrl!}
+                />
+            );
+        } else {
+            // normal text
+            return (
+                <MessageBubble
+                    isOutgoing={isOutgoing}
+                    type="text"
+                    content={item.content}
+                    senderName={item.sender.name}
+                    avatarUrl={item.sender.profileImageUrl!}
+                />
+            );
+        }
     };
+
 
     if (loading) {
         return (

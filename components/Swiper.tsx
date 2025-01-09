@@ -136,12 +136,12 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                 return (
                     <Animated.View
                         key={card.id}
-                        pointerEvents="none"
                         style={[
                             styles.card,
                             {
                                 zIndex,
                                 transform: [{ scale: secondCardScale }],
+                                pointerEvents: 'none',
                             },
                         ]}
                     >
@@ -157,12 +157,12 @@ const Swiper = ({ products }: { products: Listing[] }) => {
                 return (
                     <View
                         key={card.id}
-                        pointerEvents="none"
                         style={[
                             styles.card,
                             {
                                 zIndex,
                                 transform: [{ scale: stackedScale }, { translateY }],
+                                pointerEvents: 'none',
                             },
                         ]}
                     >
@@ -192,10 +192,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         overflow: 'hidden',
         // Shadow for iOS
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         // Elevation for Android
         elevation: 5,
     },
