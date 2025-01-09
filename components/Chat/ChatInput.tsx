@@ -1,3 +1,5 @@
+// ChatInputBar.tsx
+
 import React, { useState } from 'react';
 import {
     View,
@@ -5,11 +7,11 @@ import {
     TouchableOpacity,
     Text,
     StyleSheet,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ChatInputBarProps {
-    // Instead of passing an object, we just pass the text string
     onSendMessage: (text: string) => void;
 }
 
@@ -18,11 +20,7 @@ export default function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
 
     const handleSend = () => {
         if (!messageText.trim()) return;
-
-        // Call the parent function with just the text
         onSendMessage(messageText.trim());
-
-        // Clear the input
         setMessageText('');
     };
 
@@ -34,36 +32,56 @@ export default function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
                     value={messageText}
                     onChangeText={setMessageText}
                     placeholder="Type a message..."
+                    placeholderTextColor="#999"
                 />
                 <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-                    <Ionicons name="send" size={20} color="#333" />
+                    <Ionicons name="send" size={22} color="#fff" />
                 </TouchableOpacity>
             </View>
         </View>
     );
 }
 
+// ---------- Styles -----------
 const styles = StyleSheet.create({
     container: {
-        borderTopWidth: 1,
-        borderColor: '#ccc',
-        padding: 8,
-        backgroundColor: '#fff',
+        borderTopWidth: 0,
+        backgroundColor: '#FFD6EC', // Pastel pink for the entire input row area
+        paddingHorizontal: 8,
+        paddingTop: 8,
+        paddingBottom: Platform.select({ ios: 20, android: 12 }),
+        // Extra bottom padding for iOS "safe area"
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 4,
     },
     inputRow: {
         flexDirection: 'row',
-        marginBottom: 8,
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
     },
     input: {
         flex: 1,
-        backgroundColor: '#f4f4f4',
-        borderRadius: 8,
-        paddingHorizontal: 10,
+        fontSize: 15,
+        color: '#333',
         marginRight: 8,
     },
     sendButton: {
         width: 40,
-        alignItems: 'center',
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#E91E63',  // Vibrant pink for send button
         justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#E91E63',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 3,
     },
 });

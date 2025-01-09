@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -50,6 +50,7 @@ interface ChatScreenBaseProps {
 }
 
 export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBaseProps) {
+    const flatListRef = useRef<FlatList>(null);
     const { user } = useUser();
     const [chatData, setChatData] = useState<ChatDetails | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -162,6 +163,7 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
         <KeyboardAvoidingView
             style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={45}
         >
             <UpgradedHeaderChat
                 sellerName={headerTitle}
@@ -171,10 +173,21 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
             />
 
             <FlatList
+                ref={flatListRef}
                 data={messages}
                 keyExtractor={(m) => m.id}
                 renderItem={renderItem}
                 contentContainerStyle={{ padding: 12 }}
+                onContentSizeChange={() => {
+                    // Scroll to bottom when new messages arrive
+                    setTimeout(() => {
+                        if (messages.length > 0) {
+                            // @ts-ignore
+                            flatListRef.current.scrollToEnd();
+                        }
+                    }, 100);
+                }
+                }
             />
 
             <ChatInputBar onSendMessage={handleSendMessage} />
