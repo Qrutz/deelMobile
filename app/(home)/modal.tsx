@@ -20,8 +20,6 @@ import ChatScreen from '@/components/Chat/Chatroom';
 
 export default function Modal() {
     const { productId, sellerId, chatId } = useLocalSearchParams(); // Get query params for product and seller
-    const singleProductId = Array.isArray(productId) ? productId[0] : productId;
-    const singleSellerId = Array.isArray(sellerId) ? sellerId[0] : sellerId;
     const singleChatId = Array.isArray(chatId) ? chatId[0] : chatId;
 
 
@@ -30,7 +28,7 @@ export default function Modal() {
     return (
         <SafeAreaView style={{ flex: 1 }}>
 
-            <ChatScreen chatId={singleChatId} productId={singleProductId} sellerId={singleSellerId} />
+            <ChatScreen chatId={singleChatId} />
         </SafeAreaView>
 
     );
