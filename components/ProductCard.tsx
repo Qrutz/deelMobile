@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Listing } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 
 export default function ProductCard({ product }: { product: Listing }) {
     const [liked, setLiked] = useState(false);
@@ -27,10 +28,11 @@ export default function ProductCard({ product }: { product: Listing }) {
                     <Image
                         source={{ uri: product.ImageUrl }}
                         style={styles.image}
-                        resizeMode="cover"
+                        contentFit='cover'
+
                     />
                     {/* Heart Button */}
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={styles.heartButton}
                         onPress={() => setLiked(!liked)}
                     >
@@ -39,7 +41,7 @@ export default function ProductCard({ product }: { product: Listing }) {
                             size={18}
                             color={liked ? '#FF4A4A' : '#333'} // e.g. red if liked
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
                 {/* Title & Price */}
@@ -74,14 +76,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 140,
     },
-    heartButton: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        borderRadius: 16,
-        padding: 6,
-    },
+
     textContainer: {
         paddingHorizontal: 12,
         paddingVertical: 8,

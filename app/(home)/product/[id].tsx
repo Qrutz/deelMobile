@@ -140,7 +140,7 @@ export default function ProductPage() {
                 {/* Title and Price */}
                 <View style={styles.header}>
                     <Text style={styles.title}>{listing.title}</Text>
-                    <Text style={styles.price}>${listing.price.toFixed(2)}</Text>
+                    <Text style={styles.price}>{listing.price.toFixed(0)}kr</Text>
                 </View>
 
                 <Text style={styles.description}>{listing.description}</Text>
@@ -192,7 +192,7 @@ export default function ProductPage() {
                             />
                             <View style={{ marginLeft: 10 }}>
                                 <Text style={styles.previewTitle}>{listing.title}</Text>
-                                <Text style={styles.previewPrice}>${listing.price.toFixed(2)}</Text>
+                                <Text style={styles.previewPrice}>SEK {listing.price.toFixed(2)}</Text>
                             </View>
                         </View>
 
@@ -233,7 +233,7 @@ export default function ProductPage() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#FFF7FB', // a soft pastel/pink-ish background
     },
     sellerContainer: {
         flexDirection: 'row',
@@ -249,6 +249,7 @@ const styles = StyleSheet.create({
     sellerName: {
         fontSize: 16,
         fontWeight: 'bold',
+        color: '#333',
     },
     backButton: {
         position: 'absolute',
@@ -258,12 +259,17 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: 10,
         borderRadius: 20,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+        // subtle shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
     },
     imageContainer: {
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
+        position: 'relative',
+
         overflow: 'hidden',
+        marginBottom: 12,
     },
     image: {
         width: '100%',
@@ -276,11 +282,22 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: 10,
         borderRadius: 20,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
     },
     detailsContainer: {
         flex: 1,
         padding: 20,
+        backgroundColor: '#fff', // white detail area
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        marginTop: -30, // overlap the image container for a nice layered look
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     header: {
         flexDirection: 'row',
@@ -292,40 +309,44 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: '#333',
+        maxWidth: '70%', // so long titles wrap
     },
     price: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#4CAF50',
+        color: '#E91E63', // bright pink for price
     },
     description: {
         fontSize: 16,
-        color: '#666',
+        color: '#555',
         marginBottom: 20,
+        lineHeight: 22,
     },
     buttonsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
+    // Make the buy button look disabled
     buyButton: {
         flex: 1,
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#ddd', // visually disabled
         paddingVertical: 15,
         borderRadius: 10,
         marginRight: 10,
         alignItems: 'center',
     },
     buyButtonText: {
-        color: '#fff',
+        color: '#aaa', // lighter text color
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '600',
     },
     chatButton: {
         flex: 1,
-        backgroundColor: '#fdf488',
+        backgroundColor: '#FDE68A', // pastel yellow
         paddingVertical: 15,
         borderRadius: 10,
         alignItems: 'center',
+        // no marginRight here, or if you prefer space, you can do marginLeft: 10
     },
     chatButtonText: {
         color: '#333',
@@ -355,6 +376,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         marginBottom: 10,
+        color: '#333',
     },
     productPreview: {
         flexDirection: 'row',
@@ -365,6 +387,7 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 6,
+        marginRight: 10,
     },
     previewTitle: {
         fontSize: 14,
@@ -382,6 +405,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 8,
         marginBottom: 12,
+        color: '#333',
     },
     modalButtonRow: {
         flexDirection: 'row',
@@ -389,7 +413,7 @@ const styles = StyleSheet.create({
     },
     modalButton: {
         flex: 1,
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#E91E63',
         padding: 12,
         borderRadius: 8,
         alignItems: 'center',
@@ -400,4 +424,3 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 });
-

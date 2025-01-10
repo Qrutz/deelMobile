@@ -101,7 +101,7 @@ export default function ProfilePage() {
             {/* Building */}
             <View style={styles.infoContainer}>
                 <Ionicons name="business-outline" size={24} color="#4CAF50" />
-                {/* <Text style={styles.infoText}>{userData?.Studenthousing.name }</Text> */}
+                <Text style={styles.infoText}>{userData?.Studenthousing.name}</Text>
             </View>
 
             {/* Sign-Out Button */}
