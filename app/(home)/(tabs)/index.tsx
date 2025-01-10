@@ -101,7 +101,7 @@ export default function Marketplace() {
 
     // Navigate to "Proximity" page
     const handleLightningPress = () => {
-        router.push('/proximity');
+        router.push('/(home)/map/Index');
     };
 
     return (
@@ -129,7 +129,7 @@ export default function Marketplace() {
                                 ]}
                             />
                             {/* Actual icon on top */}
-                            <Ionicons name="layers" size={24} color="#333" />
+                            <Ionicons name="map" size={24} color="#333" />
                         </View>
                     </TouchableOpacity>
 

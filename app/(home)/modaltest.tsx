@@ -143,7 +143,7 @@ export default function AddListingScreen() {
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),
                     imageUrl: finalImageUrl,   // The new image URL
-                    category: selectedCategory,
+                    category: selectedCategory || 'OTHER',
                 },
                 {
                     onSuccess: () => {
