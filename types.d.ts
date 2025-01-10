@@ -1,9 +1,12 @@
 // Define the User type
 export interface User {
   id: string;
+  name: string;
   fullName: string;
   image: string;
+  email: string;
   username?: string | null; // Optional since it's null in your example
+  profileImageUrl?: string | null; // Optional since it's null in your example
 }
 
 // Define the Listing type
