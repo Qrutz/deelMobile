@@ -106,8 +106,6 @@ export default function ProductPage() {
         );
     }
 
-    console.log("Seller's image:", listing?.user.image);
-
     // Error state
     if (isError || !listing) {
         return (
