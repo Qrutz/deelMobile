@@ -129,6 +129,15 @@ export default function HomeStack() {
                     presentation: 'fullScreenModal',
 
                 }} />
+
+                <Stack.Screen name="modaltest" options={{
+
+                    presentation: 'fullScreenModal',
+
+
+                }} />
+
+
                 {/*
 
             {/*

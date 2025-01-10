@@ -1,16 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Image, TextInput, Alert, StyleSheet } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    Image,
+    TouchableOpacity,
+    Alert,
+    SafeAreaView,
+    ScrollView,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import * as Location from 'expo-location';
 import { useCreateListing } from '../../../hooks/ListingHooks/useCreateListing';
-import Constants from 'expo-constants';
+import { Category } from '@/constants/Categories';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
+const CATEGORIES = [
+    { label: 'Other', value: 'OTHER' },
+    { label: 'Textbooks', value: 'TEXTBOOKS' },
+    { label: 'Electronics', value: 'ELECTRONICS' },
+    { label: 'Clothing', value: 'CLOTHING' },
+    { label: 'Sports', value: 'SPORTS' },
+    { label: 'Music', value: 'MUSIC' },
+];
 
-const AddListing: React.FC = () => {
+export default function AddListing() {
     const router = useRouter();
     const { user } = useUser();
     const { mutate: createListing } = useCreateListing();
@@ -22,6 +41,7 @@ const AddListing: React.FC = () => {
     const [latitude, setLatitude] = useState('');
     const [longitude, setLongitude] = useState('');
     const [locationError, setLocationError] = useState('');
+    const [category, setCategory] = useState<Category>('OTHER');
 
     useEffect(() => {
         (async () => {
@@ -30,7 +50,6 @@ const AddListing: React.FC = () => {
                 setLocationError('Permission to access location was denied');
                 return;
             }
-
             let location = await Location.getCurrentPositionAsync({});
             setLatitude(location.coords.latitude.toString());
             setLongitude(location.coords.longitude.toString());
@@ -39,7 +58,7 @@ const AddListing: React.FC = () => {
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ["images"],
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
@@ -57,7 +76,6 @@ const AddListing: React.FC = () => {
         }
 
         try {
-            // Step 1: Get SAS URL
             const fileName = image.split('/').pop();
             const sasResponse = await fetch(`${API_URL}/sas/generate-sas-url`, {
                 method: 'POST',
@@ -71,8 +89,7 @@ const AddListing: React.FC = () => {
                 return;
             }
 
-            // Step 2: Upload Image
-            const imageBlob = await fetch(image).then(res => res.blob());
+            const imageBlob = await fetch(image).then((res) => res.blob());
             const uploadResponse = await fetch(sasUrl, {
                 method: 'PUT',
                 headers: { 'x-ms-blob-type': 'BlockBlob' },
@@ -84,7 +101,6 @@ const AddListing: React.FC = () => {
                 return;
             }
 
-            // Step 3: Submit Listing via useCreateListing hook
             createListing(
                 {
                     title,
@@ -93,6 +109,7 @@ const AddListing: React.FC = () => {
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),
                     imageUrl: sasUrl.split('?')[0],
+                    category,
                 },
                 {
                     onSuccess: () => {
@@ -111,51 +128,154 @@ const AddListing: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text>Title:</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Enter title" />
+        <SafeAreaView style={styles.safeArea}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.container}>
+                    <Text style={styles.headerText}>Create New Listing</Text>
 
-            <Text>Description:</Text>
-            <TextInput
-                style={styles.input}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Enter description"
-            />
+                    <Text style={styles.label}>Title</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={title}
+                        onChangeText={setTitle}
+                        placeholder="Enter title"
+                        placeholderTextColor="#999"
+                    />
 
-            <Text>Price:</Text>
-            <TextInput
-                style={styles.input}
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="numeric"
-                placeholder="Enter price"
-            />
+                    <Text style={styles.label}>Description</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder="Enter description"
+                        placeholderTextColor="#999"
+                    />
 
-            <Button title="Pick an Image" onPress={pickImage} />
-            {image && <Image source={{ uri: image }} style={styles.image} />}
+                    <Text style={styles.label}>Price</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={price}
+                        onChangeText={setPrice}
+                        keyboardType="numeric"
+                        placeholder="Enter price"
+                        placeholderTextColor="#999"
+                    />
 
-            <Button title="Create Listing" onPress={handleSubmit} />
-        </View>
+                    <Text style={styles.label}>Category</Text>
+                    <View style={styles.debugBg}>
+                        <Picker
+                            selectedValue={category}
+                            onValueChange={(itemValue) => setCategory(itemValue)}
+                            style={{
+                                width: '100%',
+                                color: 'black',
+                                backgroundColor: 'white',
+                            }}
+                            itemStyle={{
+                                color: 'black',
+                            }}
+                        >
+                            {CATEGORIES.map((cat) => (
+                                <Picker.Item key={cat.value} label={cat.label} value={cat.value} />
+                            ))}
+                        </Picker>
+                    </View>
+
+                    <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+                        <Text style={styles.imageButtonText}>Pick an Image</Text>
+                    </TouchableOpacity>
+                    {image && <Image source={{ uri: image }} style={styles.image} />}
+
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                        <Text style={styles.submitButtonText}>Create Listing</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
-};
-
-export default AddListing;
+}
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#FFD6EC',
+    },
+    scrollContent: {
+        paddingBottom: 30, // space at bottom for content
+    },
     container: {
-        padding: 20,
+        backgroundColor: '#fff',
+        margin: 16,
+        borderRadius: 12,
+        padding: 16,
+
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+
+        elevation: 4,
+    },
+    headerText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#333',
+        marginBottom: 16,
+        textAlign: 'center',
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 4,
+        color: '#333',
     },
     input: {
-        height: 40,
-        borderColor: 'gray',
+        backgroundColor: '#f8f8f8',
+        borderRadius: 8,
         borderWidth: 1,
-        marginBottom: 10,
-        padding: 5,
+        borderColor: '#ccc',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 12,
+        color: '#333',
+    },
+    debugBg: {
+        minHeight: 48,
+        marginBottom: 12,
+        justifyContent: 'center',
+        backgroundColor: 'white',
+        borderRadius: 8,
+        borderColor: '#ccc',
+        borderWidth: 1,
+    },
+    imageButton: {
+        backgroundColor: '#FDE68A',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    imageButtonText: {
+        color: '#333',
+        fontWeight: '600',
     },
     image: {
-        width: 200,
+        width: '100%',
         height: 200,
-        marginTop: 10,
+        borderRadius: 8,
+        marginTop: 8,
+        marginBottom: 16,
+    },
+    submitButton: {
+        backgroundColor: '#E91E63',
+        paddingVertical: 14,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 16,
     },
 });

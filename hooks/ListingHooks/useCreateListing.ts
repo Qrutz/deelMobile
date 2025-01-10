@@ -1,6 +1,7 @@
 import { Listing } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-expo'; // Import Clerk auth hook
+import { Category } from '@/constants/Categories';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
@@ -11,6 +12,7 @@ interface CreateListingType {
   latitude: number;
   longitude: number;
   imageUrl: string;
+  category: Category;
 }
 
 export function useCreateListing() {

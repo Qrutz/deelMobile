@@ -53,6 +53,7 @@ export default function TabLayout() {
 
             {/* Add Listing Tab - Custom Floating Button */}
             <Tabs.Screen
+
                 name="addListing"
                 options={{
                     title: '', // no tab title
@@ -61,7 +62,7 @@ export default function TabLayout() {
                             <TouchableOpacity
                                 style={styles.addButton}
 
-                                onPress={() => router.push('/addListing')}
+                                onPress={() => router.push('/(home)/modaltest')}
                             >
                                 <Ionicons name="add" size={30} color="white" />
                             </TouchableOpacity>

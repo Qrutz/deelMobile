@@ -4,7 +4,7 @@ import { Slot } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar, StyleSheet } from 'react-native';
 import { tokenCache } from '@/cache';
-import BottomNavigation from '@/components/BottomNavigation';
+
 
 const queryClient = new QueryClient();
 

@@ -17,16 +17,9 @@ import { useRouter } from 'expo-router';
 import { useFetchListings } from '@/hooks/ListingHooks/useFetchListings';
 import { Listing } from '@/types';
 import ProductCard from '@/components/ProductCard';
+import { CATEGORIES } from '@/constants/Categories';
 
-const CATEGORIES = [
-    { label: 'All', icon: 'apps' },
-    { label: 'Textbooks', icon: 'book-outline' },
-    { label: 'Electronics', icon: 'laptop-outline' },
-    { label: 'Clothing', icon: 'shirt-outline' },
-    { label: 'Kitchenware', icon: 'restaurant-outline' },
-    { label: 'Other', icon: 'cube-outline' },
 
-];
 
 const { width } = Dimensions.get('window');
 const ITEM_HORIZONTAL_MARGIN = 8;
