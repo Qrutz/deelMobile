@@ -54,7 +54,7 @@ export default function MessageBubble({
                         <Image
                             source={{ uri: content }}
                             style={styles.gifImage}
-                            contentFit='contain'
+                            contentFit='cover'
                         />
                     ) : (
                         <Text style={styles.bubbleText}>{content}</Text>

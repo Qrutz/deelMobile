@@ -3,9 +3,9 @@ import {
     Text,
     View,
     StyleSheet,
-    Image,
 } from 'react-native';
 import { Listing } from '@/types';
+import { Image } from 'expo-image';
 
 interface ProductCardProps {
     listing: Listing;
