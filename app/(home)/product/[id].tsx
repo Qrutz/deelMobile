@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
-    Image,
     StyleSheet,
     TouchableOpacity,
     ActivityIndicator,
@@ -10,6 +9,7 @@ import {
     Modal,
     TextInput,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchListing } from '../../../hooks/ListingHooks/useFetchListing';
@@ -106,6 +106,8 @@ export default function ProductPage() {
         );
     }
 
+    console.log("Seller's image:", listing?.user.image);
+
     // Error state
     if (isError || !listing) {
         return (
@@ -147,7 +149,12 @@ export default function ProductPage() {
 
                 {/* Seller Info */}
                 <View style={styles.sellerContainer}>
-                    <Image source={{ uri: listing.user.image }} style={styles.sellerImage} />
+                    {/* BUG HERE : IF U GO TO CHAT THEN BACK TO THIS PAGE IT SHOWS THE GIF FOR SOME REASON UNTIL IMAGE LOADS */}
+                    <Image
+                        source={listing.user.image}
+                        style={styles.sellerImage}
+                        contentFit="cover" // roughly equivalent to resizeMode="cover"
+                    />
                     <Text style={styles.sellerName}>{listing.user.fullName}</Text>
                 </View>
 

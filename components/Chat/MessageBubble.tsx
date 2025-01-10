@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import ProductCardBubble from './ProductCardBubble';
+import { Image } from 'expo-image';
 
 interface MessageBubbleProps {
     type: 'text' | 'gif' | 'productCard';
@@ -53,7 +54,7 @@ export default function MessageBubble({
                         <Image
                             source={{ uri: content }}
                             style={styles.gifImage}
-                            resizeMode="cover"
+                            contentFit='contain'
                         />
                     ) : (
                         <Text style={styles.bubbleText}>{content}</Text>

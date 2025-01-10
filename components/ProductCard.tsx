@@ -3,14 +3,19 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Listing } from '@/types';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ProductCard({ product }: { product: Listing }) {
     const [liked, setLiked] = useState(false);
     const router = useRouter();
-
+    const queryClient = useQueryClient();
     return (
         <TouchableOpacity
             onPress={() => {
+
+                // Navigate to product pageQ
+                queryClient.setQueryData(['listing', product.id], product);
+
                 router.push(`/product/${product.id}`);
             }}
             activeOpacity={0.9} // a little less transparency on press

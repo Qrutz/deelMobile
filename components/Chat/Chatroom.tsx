@@ -8,7 +8,6 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
-    Image,
 } from 'react-native';
 import { useUser } from '@clerk/clerk-expo';
 import socket from '@/utils/socket';

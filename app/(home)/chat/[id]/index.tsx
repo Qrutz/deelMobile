@@ -1,19 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import {
-    View,
-    TextInput,
-    FlatList,
-    Text,
-    StyleSheet,
-    ActivityIndicator,
-    TouchableOpacity,
-    KeyboardAvoidingView,
-    Platform,
-    Alert,
-} from 'react-native';
+import React from 'react';
+
 import { router, useLocalSearchParams } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
-import { Ionicons } from '@expo/vector-icons';
+
 import ChatScreen from '@/components/Chat/Chatroom';
 
 export default function ChatRoomX() {
