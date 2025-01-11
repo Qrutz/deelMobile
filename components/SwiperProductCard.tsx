@@ -44,7 +44,7 @@ const ProductCard = ({
 
         <View style={styles.cardContainer}>
             {/* Full-bleed image (no padding). Covers entire card. */}
-            <Image source={{ uri: listing.ImageUrl }} style={styles.image} />
+            <Image source={{ uri: listing.ImageUrl }} style={styles.image} contentFit='cover' />
 
             {/* Semi-transparent overlay at the bottom for text */}
             <View style={styles.overlay}>
@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
     // Full-bleed image: covers the entire container
     image: {
         ...StyleSheet.absoluteFillObject,
-        resizeMode: 'cover',
     },
 
     // Bottom overlay: a subtle gradient or solid background for readability
