@@ -259,7 +259,7 @@ const colors = {
     starYellow: '#FFC107',
     textDark: '#333',
     textLight: '#777',
-    white: '#FFF',
+    white: '#F8F8F8', // slightly less white
 };
 
 const styles = StyleSheet.create({
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     // ---------- Header ----------
     headerContainer: {
         height: 60,
-        backgroundColor: '#fff',
+
 
         borderColor: '#eee',
         justifyContent: 'center',
