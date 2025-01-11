@@ -7,6 +7,8 @@ export interface User {
   email: string;
   username?: string | null; // Optional since it's null in your example
   profileImageUrl?: string | null; // Optional since it's null in your example
+
+  listings: Listing[];
 }
 
 // Define the Listing type

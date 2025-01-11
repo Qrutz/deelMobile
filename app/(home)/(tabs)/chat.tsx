@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
+    Alert,
     Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -20,16 +21,16 @@ interface Chat {
     name?: string;
     members: Array<{
         userId: string;
-        user: { name: string };
+        user: {
+            name: string;
+            profileImageUrl?: string;
+        };
     }>;
     messages: Array<{
         content: string;
         createdAt: string;
     }>;
 }
-
-// If you want to store or fetch an avatar, adapt your interface as needed
-// e.g., user: { name: string; avatarUrl?: string; }
 
 const ChatList = () => {
     const router = useRouter();
@@ -54,12 +55,12 @@ const ChatList = () => {
         socket.on('notifyMessage', ({ chatId, content, senderName }) => {
             console.log('New message received:', { chatId, content });
 
-            setChats((prevChats) => {
+            setChats(prevChats => {
                 const updatedChats = [...prevChats];
-                const chatIndex = updatedChats.findIndex((chat) => chat.id === chatId);
+                const chatIndex = updatedChats.findIndex(c => c.id === chatId);
 
                 if (chatIndex !== -1) {
-                    // Update the last message for existing chat
+                    // update the last message for existing chat
                     updatedChats[chatIndex] = {
                         ...updatedChats[chatIndex],
                         messages: [
@@ -68,7 +69,7 @@ const ChatList = () => {
                         ],
                     };
                 } else {
-                    // Add a new chat if not found
+                    // add a new chat if not found
                     updatedChats.unshift({
                         id: chatId,
                         isGroup: false,
@@ -80,7 +81,7 @@ const ChatList = () => {
                 return updatedChats;
             });
 
-            // Trigger local notification
+            // Local notification
             Notifications.scheduleNotificationAsync({
                 content: {
                     title: `${senderName}`,
@@ -99,7 +100,7 @@ const ChatList = () => {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4CAF50" />
+                <ActivityIndicator size="large" color="#E91E63" />
             </View>
         );
     }
@@ -114,23 +115,47 @@ const ChatList = () => {
 
     const renderItem = ({ item }: { item: Chat }) => {
         const isGroupChat = item.isGroup;
+        const otherMember = item.members.find(m => m.userId !== user?.id)?.user;
+
+        // Chat name: group name or the other user’s name
         const chatName = isGroupChat
             ? item.name || 'Unnamed Group'
-            : item.members.find((m) => m.userId !== user?.id)?.user?.name || 'Unknown User';
+            : otherMember?.name || 'Unknown User';
 
+        // Last message & timestamp
         const lastMessage = item.messages[0]?.content || 'No messages yet';
         const timestamp = item.messages[0]?.createdAt || '';
-
-        // Format the time (if any)
         const timeString = timestamp
             ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : '';
 
-        // Optionally: if you have an avatar URL, you could pass it here
-        // For now, we’ll show a placeholder avatar for group or user
-        const avatarSource = isGroupChat
-            ? <Ionicons name="people" size={44} color="#555" />
-            : <Ionicons name="person" size={44} color="#555" />;
+        // Decide the avatar:
+        // If group, show an Ionicon. If 1-on-1, show user’s profileImageUrl or a placeholder.
+        let avatarElement: React.ReactNode = null;
+        if (isGroupChat) {
+            avatarElement = (
+                <View style={[styles.avatar, styles.avatarGroup]}>
+                    <Ionicons name="people" size={20} color="#555" />
+                </View>
+            );
+        } else {
+            // private chat
+            if (otherMember?.profileImageUrl) {
+                avatarElement = (
+                    <Image
+                        source={{ uri: otherMember.profileImageUrl }}
+                        style={[styles.avatar, styles.avatarImage]}
+                    />
+                );
+            } else {
+                // fallback avatar
+                avatarElement = (
+                    <View style={[styles.avatar, styles.avatarFallback]}>
+                        <Ionicons name="person" size={22} color="#fff" />
+                    </View>
+                );
+            }
+        }
 
         return (
             <TouchableOpacity
@@ -139,7 +164,7 @@ const ChatList = () => {
                 activeOpacity={0.7}
             >
                 {/* Avatar */}
-                <View style={styles.avatar}>{avatarSource}</View>
+                {avatarElement}
 
                 {/* Middle content: Name & Last Message */}
                 <View style={styles.chatContent}>
@@ -159,7 +184,7 @@ const ChatList = () => {
         <View style={styles.container}>
             <FlatList
                 data={chats}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
                 renderItem={renderItem}
                 contentContainerStyle={{ paddingBottom: 8 }}
             />
@@ -172,7 +197,7 @@ export default ChatList;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFDFE', // a soft off-white
+        backgroundColor: '#FFF',
     },
     loadingContainer: {
         flex: 1,
@@ -196,16 +221,29 @@ const styles = StyleSheet.create({
         borderBottomColor: '#F3F3F3',
         borderBottomWidth: 1,
     },
+    /* Avatar container variations */
     avatar: {
         width: 44,
         height: 44,
         borderRadius: 22,
         marginRight: 12,
-        // Optionally add a pastel background or border
-        backgroundColor: '#ffd4e5',
     },
+    avatarGroup: {
+        backgroundColor: '#ffd4e5',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarImage: {
+        resizeMode: 'cover',
+    },
+    avatarFallback: {
+        backgroundColor: '#ccc',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
     chatContent: {
-        flex: 1, // so the name/lastmessage occupies the middle
+        flex: 1, // so name/lastmessage occupies the middle
     },
     chatName: {
         fontSize: 16,

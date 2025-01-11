@@ -146,7 +146,9 @@ export default function ProductPage() {
                 <Text style={styles.description}>{listing.description}</Text>
 
                 {/* Seller Info */}
-                <View style={styles.sellerContainer}>
+                <TouchableOpacity onPress={
+                    () => router.push(`/profile/${listing.user.id}`)
+                } style={styles.sellerContainer}>
                     {/* BUG HERE : IF U GO TO CHAT THEN BACK TO THIS PAGE IT SHOWS THE GIF FOR SOME REASON UNTIL IMAGE LOADS */}
                     <Image
                         source={listing.user.image}
@@ -154,7 +156,7 @@ export default function ProductPage() {
                         contentFit="cover" // roughly equivalent to resizeMode="cover"
                     />
                     <Text style={styles.sellerName}>{listing.user.fullName}</Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Action Buttons */}
                 <View style={styles.buttonsContainer}>
