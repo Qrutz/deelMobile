@@ -137,7 +137,9 @@ export default function HomeStack() {
 
                 }} />
 
-
+                <Stack.Screen name="proposeTradeModal" options={{
+                    presentation: 'fullScreenModal',
+                }} />
                 {/*
 
             {/*

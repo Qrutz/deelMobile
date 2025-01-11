@@ -1,6 +1,15 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, FlatList, ScrollView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import {
+    View,
+    Text,
+    ActivityIndicator,
+    StyleSheet,
+    FlatList,
+    TouchableOpacity
+} from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+
 import { useFetchUser } from '@/hooks/UserHooks/useGetUser';
 import ProductCard from '@/components/ProductCard';
 
@@ -8,13 +17,11 @@ import ProductCard from '@/components/ProductCard';
 import { ProfileHeader } from '@/components/Profile/ProfileHeader';
 import { ProfileInterests } from '@/components/Profile/ProfileInterests';
 
-
 export default function ProfilePage() {
     const { id } = useLocalSearchParams() as { id: string };
     const { data: user, isLoading, isError } = useFetchUser(id);
 
-    // You could define a placeholder interests array
-    // if your user object doesn't have an `interests` field yet
+    // Example placeholder if user object lacks an `interests` field
     const userInterests = ['Photography', 'Cycling', 'Cooking'];
 
     if (isLoading) {
@@ -33,15 +40,19 @@ export default function ProfilePage() {
         );
     }
 
-    return (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    // --- Define a Header Component for the FlatList ---
+    const renderHeader = () => (
+        <>
+            {/* Custom top bar */}
+            <View style={styles.headerContainer}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Ionicons name="chevron-back" size={22} color="#333" />
+                </TouchableOpacity>
+            </View>
+
             {/* Profile Header (reusable) */}
             <ProfileHeader
-                profileImageUrl={
-                    user.profileImageUrl || // if present
-                    user.image ||           // fallback to user.image
-                    'https://via.placeholder.com/150'
-                }
+                profileImageUrl={user.profileImageUrl || user.image || 'https://via.placeholder.com/150'}
                 name={user.name || user.fullName || 'User'}
                 rating={0}           // placeholder rating
                 reviewsCount={0}     // placeholder reviews
@@ -49,36 +60,40 @@ export default function ProfilePage() {
                 tokens={0}           // placeholder tokens
             />
 
-            {/* Interests (reusable) 
-          - Since this might be a "public" profile, no "Edit" button:
-      */}
+            {/* Interests (reusable) */}
             <ProfileInterests
                 interests={userInterests}
-                canEdit={false}               // hides the "Edit Interests" button
+                canEdit={false} // hides the "Edit Interests" button for a public profile
             />
 
-            {/* Listings Grid */}
+            {/* Section Title */}
             <Text style={styles.sectionTitle}>Listings by {user.name}</Text>
-            {user.listings && user.listings.length > 0 ? (
-                <FlatList
-                    data={user.listings}
-                    keyExtractor={(item) => item.id.toString()}
-                    numColumns={2} // Two-column grid
-                    columnWrapperStyle={styles.columnWrapper}
-                    renderItem={({ item }) => (
-                        <View style={styles.gridItem}>
-                            <ProductCard product={item} />
-                        </View>
-                    )}
-                />
-            ) : (
+        </>
+    );
+
+    // --- Render the entire screen with one FlatList ---
+    return (
+        <FlatList
+            data={user.listings}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrapper}
+            ListHeaderComponent={renderHeader}
+            ListEmptyComponent={() => (
                 <View style={styles.centered}>
                     <Text style={styles.noListingsText}>
                         {user.name} has no listings yet.
                     </Text>
                 </View>
             )}
-        </ScrollView>
+            renderItem={({ item }) => (
+                <View style={styles.gridItem}>
+                    <ProductCard product={item} />
+                </View>
+            )}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            style={styles.container}
+        />
     );
 }
 
@@ -90,6 +105,11 @@ const styles = StyleSheet.create({
     centered: {
         flex: 1,
         justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerContainer: {
+        padding: 12,
+        flexDirection: 'row',
         alignItems: 'center',
     },
     sectionTitle: {

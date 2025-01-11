@@ -67,28 +67,13 @@ export default function ProductPage() {
                 );
             });
 
-
-            // Step B: We have result.chatId => push to the chat
-            // But we also want to send the "product card" message with optional note
-            // Approaches:
-            // (A) Pass product info in route params, let the chat screen handle sending
-            // (B) Use a socket or an HTTP call here to send the product message instantly
-
-            // For simplicity, let's do (A):
-            // We'll pass it to the route so the chat screen can handle sending it
-            // Then navigate to the chat, passing along the chatId
-            // If your updated server logic already inserts the product-card message,
-            // you might not need to pass product data to the route. 
-            // But let's keep it minimal:
-
-            // push to chat/result.chatId with no data, just push
+            // Step B: push to chat screen
             router.push({
                 pathname: '/chat/[id]',
                 params: { id: result.chatId },
             });
 
-
-            // Close the modal
+            // Close the modal & clear input
             setShowProductModal(false);
             setUserMessage('');
         } catch (error) {
@@ -97,7 +82,6 @@ export default function ProductPage() {
         }
     };
 
-    // Loading state
     if (isLoading) {
         return (
             <View style={styles.container}>
@@ -106,7 +90,6 @@ export default function ProductPage() {
         );
     }
 
-    // Error state
     if (isError || !listing) {
         return (
             <View style={styles.container}>
@@ -118,7 +101,6 @@ export default function ProductPage() {
         );
     }
 
-    // Render Product Page
     return (
         <View style={styles.container}>
             {/* Back Button */}
@@ -140,30 +122,38 @@ export default function ProductPage() {
                 {/* Title and Price */}
                 <View style={styles.header}>
                     <Text style={styles.title}>{listing.title}</Text>
-                    <Text style={styles.price}>{listing.price.toFixed(0)}kr</Text>
+                    <Text style={styles.price}>{listing.price.toFixed(0)} kr</Text>
                 </View>
 
                 <Text style={styles.description}>{listing.description}</Text>
 
                 {/* Seller Info */}
-                <TouchableOpacity onPress={
-                    () => router.push(`/profile/${listing.user.id}`)
-                } style={styles.sellerContainer}>
-                    {/* BUG HERE : IF U GO TO CHAT THEN BACK TO THIS PAGE IT SHOWS THE GIF FOR SOME REASON UNTIL IMAGE LOADS */}
+                <TouchableOpacity
+                    onPress={() => router.push(`/profile/${listing.user.id}`)}
+                    style={styles.sellerContainer}
+                >
                     <Image
                         source={listing.user.image}
                         style={styles.sellerImage}
-                        contentFit="cover" // roughly equivalent to resizeMode="cover"
+                        contentFit="cover"
                     />
                     <Text style={styles.sellerName}>{listing.user.fullName}</Text>
                 </TouchableOpacity>
 
                 {/* Action Buttons */}
                 <View style={styles.buttonsContainer}>
-                    <TouchableOpacity style={styles.buyButton}>
-                        <Text style={styles.buyButtonText}>Buy now</Text>
+                    {/* Propose Swap Button */}
+                    <TouchableOpacity onPress={
+                        () => router.push({
+                            pathname: '/proposeTradeModal',
+                            params: { listingId: listing.id }, // pass any needed param
+                        })
+                    }
+                        style={styles.swapButton}>
+                        <Text style={styles.swapButtonText}>Propose Swap</Text>
                     </TouchableOpacity>
 
+                    {/* Chat Button */}
                     <TouchableOpacity
                         style={styles.chatButton}
                         onPress={handleOpenModal}
@@ -178,7 +168,7 @@ export default function ProductPage() {
                 </View>
             </View>
 
-            {/* 3) "Compose product message" modal */}
+            {/* Modal for "Compose product message" */}
             <Modal
                 visible={showProductModal}
                 animationType="slide"
@@ -187,6 +177,7 @@ export default function ProductPage() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Send a message about:</Text>
+
                         <View style={styles.productPreview}>
                             <Image
                                 source={{ uri: listing.ImageUrl }}
@@ -194,7 +185,9 @@ export default function ProductPage() {
                             />
                             <View style={{ marginLeft: 10 }}>
                                 <Text style={styles.previewTitle}>{listing.title}</Text>
-                                <Text style={styles.previewPrice}>SEK {listing.price.toFixed(2)}</Text>
+                                <Text style={styles.previewPrice}>
+                                    SEK {listing.price.toFixed(2)}
+                                </Text>
                             </View>
                         </View>
 
@@ -261,7 +254,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: 10,
         borderRadius: 20,
-        // subtle shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.15,
@@ -269,7 +261,6 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         position: 'relative',
-
         overflow: 'hidden',
         marginBottom: 12,
     },
@@ -292,10 +283,10 @@ const styles = StyleSheet.create({
     detailsContainer: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#fff', // white detail area
+        backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        marginTop: -30, // overlap the image container for a nice layered look
+        marginTop: -30,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
@@ -311,12 +302,12 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: '#333',
-        maxWidth: '70%', // so long titles wrap
+        maxWidth: '70%',
     },
     price: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#E91E63', // bright pink for price
+        color: '#E91E63',
     },
     description: {
         fontSize: 16,
@@ -328,33 +319,34 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
-    // Make the buy button look disabled
-    buyButton: {
+    // New "Propose Swap" button
+    swapButton: {
         flex: 1,
-        backgroundColor: '#ddd', // visually disabled
+        backgroundColor: '#E91E63',
         paddingVertical: 15,
         borderRadius: 10,
         marginRight: 10,
         alignItems: 'center',
     },
-    buyButtonText: {
-        color: '#aaa', // lighter text color
+    swapButtonText: {
+        color: '#fff',
         fontSize: 16,
         fontWeight: '600',
     },
+
     chatButton: {
         flex: 1,
-        backgroundColor: '#FDE68A', // pastel yellow
+        backgroundColor: '#FDE68A',
         paddingVertical: 15,
         borderRadius: 10,
         alignItems: 'center',
-        // no marginRight here, or if you prefer space, you can do marginLeft: 10
     },
     chatButtonText: {
         color: '#333',
         fontSize: 16,
         fontWeight: 'bold',
     },
+
     errorText: {
         color: 'red',
         fontSize: 18,
