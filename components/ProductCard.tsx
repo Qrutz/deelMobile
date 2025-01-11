@@ -32,7 +32,7 @@ export default function ProductCard({ product }: { product: Listing }) {
 
                     />
                     {/* Heart Button */}
-                    {/* <TouchableOpacity
+                    <TouchableOpacity
                         style={styles.heartButton}
                         onPress={() => setLiked(!liked)}
                     >
@@ -41,7 +41,7 @@ export default function ProductCard({ product }: { product: Listing }) {
                             size={18}
                             color={liked ? '#FF4A4A' : '#333'} // e.g. red if liked
                         />
-                    </TouchableOpacity> */}
+                    </TouchableOpacity>
                 </View>
 
                 {/* Title & Price */}
@@ -58,16 +58,21 @@ export default function ProductCard({ product }: { product: Listing }) {
 
 // Just replace your styling with this snippet
 
+// ProductCard.tsx (only the relevant styles to achieve the design)
 const styles = StyleSheet.create({
     cardContainer: {
         width: '100%',
     },
     card: {
-        backgroundColor: '#FCE5FF', // Deeper pastel-lavender/pink for clearer contrast
+        backgroundColor: '#FCE5FF', // Pastel-lavender background
         borderRadius: 12,
         overflow: 'hidden',
-        // More pronounced shadow
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        // Subtle shadow
+        shadowColor: '#000',   // iOS shadow
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,         // Android shadow
     },
     imageContainer: {
         position: 'relative',
@@ -75,8 +80,16 @@ const styles = StyleSheet.create({
     image: {
         width: '100%',
         height: 140,
+        resizeMode: 'cover', // ensure the image covers the container
     },
-
+    heartButton: {
+        position: 'absolute',
+        top: 105,
+        right: 1,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 20,
+        padding: 6,
+    },
     textContainer: {
         paddingHorizontal: 12,
         paddingVertical: 8,
@@ -85,12 +98,11 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '600',
         color: '#4A4A4A',
-        marginBottom: 4,
+        marginBottom: 2,
     },
     price: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '700',
-        color: '#FF6F9C', // Fun pink accent
+        color: '#FF6F9C', // Pink accent for price
     },
 });
-

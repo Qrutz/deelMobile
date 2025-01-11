@@ -21,6 +21,7 @@
     "@lottiefiles/dotlottie-react": "^0.6.5",
     "@react-native-picker/picker": "2.9.0",
     "@react-navigation/bottom-tabs": "^7.0.0",
+    "@react-navigation/material-top-tabs": "^7.1.0",
     "@react-navigation/native": "^7.0.0",
     "@tanstack/react-query": "^5.62.8",
     "expo": "~52.0.25",

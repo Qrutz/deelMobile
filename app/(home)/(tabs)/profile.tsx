@@ -433,10 +433,11 @@ const styles = StyleSheet.create({
     tabContainer: {
         flexDirection: 'row',
         borderRadius: 8,
-        marginHorizontal: 20,
+        marginHorizontal: 25,
         marginBottom: 10,
         overflow: 'hidden',
         backgroundColor: '#f0f0f0',
+
     },
     tabButton: {
         flex: 1,
@@ -460,7 +461,7 @@ const styles = StyleSheet.create({
         flex: 1,               // let this section fill remaining space
         justifyContent: 'center',
         alignItems: 'center',
-        marginHorizontal: 20,
+        marginHorizontal: 25,
         borderRadius: 8,
         // Remove or reduce marginBottom if you want it truly full-height
         marginBottom: 60,
