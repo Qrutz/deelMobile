@@ -11,9 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // for settings icon, star icons, etc.
 import { useAuth } from '@clerk/clerk-expo';
+import { useFetchUserListings } from '@/hooks/ListingHooks/useFetchMyListings';
+import ProductCard from '@/components/ProductCard';
 
 export default function ProfilePage() {
     const { signOut, getToken } = useAuth(); // Clerk auth
+    const { data, isLoading, isError } = useFetchUserListings();
 
     // Adjust shape according to your API
     const [userData, setUserData] = useState<{
@@ -99,7 +102,7 @@ export default function ProfilePage() {
     const interests = ['Arts', 'Crafts', 'Gardening'];
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent} style={styles.container}>
             {/* ---------- Header ---------- */}
             <View style={styles.headerContainer}>
                 <Text style={styles.headerTitle}>Profile</Text>
@@ -156,8 +159,8 @@ export default function ProfilePage() {
             <View style={styles.interestsSection}>
                 <Text style={styles.interestsTitle}>Interests</Text>
                 <View style={styles.interestsList}>
-                    {interests.map((interest, idx) => (
-                        <View style={styles.interestTag} key={idx}>
+                    {interests.map((interest, index) => (
+                        <View style={styles.interestTag} key={index}>
                             <Text style={styles.interestTagText}>{interest}</Text>
                         </View>
                     ))}
@@ -210,12 +213,30 @@ export default function ProfilePage() {
             {/* ---------- Tab Content ---------- */}
             {activeTab === 'Deels' ? (
                 <View style={styles.tabContent}>
-                    <Text style={styles.emptyStateText}>
-                        You don't have anything added yet
-                    </Text>
-                    <TouchableOpacity style={styles.addButton}>
-                        <Text style={styles.addButtonText}>+ Add Something</Text>
-                    </TouchableOpacity>
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color={colors.mainPink} />
+                    ) : isError ? (
+                        <Text style={styles.emptyStateText}>Failed to load listings</Text>
+                    ) : data && data.length > 0 ? (
+                        // Two-column grid
+                        <View style={styles.gridContainer}>
+                            {data.map((listing) => (
+                                <View style={styles.gridItem} key={listing.id}>
+                                    <ProductCard product={listing} />
+                                </View>
+                            ))}
+                        </View>
+                    ) : (
+                        // Empty state if no listings
+                        <>
+                            <Text style={styles.emptyStateText}>
+                                You don&apos;t have anything added yet
+                            </Text>
+                            <TouchableOpacity style={styles.addButton}>
+                                <Text style={styles.addButtonText}>+ Add Something</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
             ) : (
                 <View style={styles.tabContent}>
@@ -242,6 +263,9 @@ const colors = {
 };
 
 const styles = StyleSheet.create({
+    scrollContent: {
+        flexGrow: 1,           // allows the content to grow & fill screen height
+    },
     container: {
         flex: 1,
         backgroundColor: colors.white,
@@ -363,22 +387,27 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     interestsTitle: {
-        fontSize: 15,
+        // make it be quite wide since the interests list take up entire width
+        width: '100%',
+        fontSize: 16,
         fontWeight: '600',
         color: colors.textDark,
-        marginBottom: 8,
+        marginBottom: 2,
+        marginLeft: 8,
+
     },
     interestsList: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
+        justifyContent: 'space-between',  // spaces out each interest evenly
+        marginVertical: 8,
     },
     interestTag: {
-        backgroundColor: colors.lightPink,
+        flex: 1,                           // let each interest expand equally
+        marginHorizontal: 4,              // small horizontal gap
+        backgroundColor: colors.lightPink, // or your choice
         borderRadius: 16,
         paddingVertical: 8,
-        paddingHorizontal: 16,
-        marginRight: 8,
-        marginBottom: 8,
+        alignItems: 'center',
     },
     interestTagText: {
         fontSize: 13,
@@ -391,6 +420,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
         paddingVertical: 6,
         borderRadius: 6,
+        marginLeft: 6,
     },
 
     editInterestsButtonText: {
@@ -427,13 +457,15 @@ const styles = StyleSheet.create({
 
     // ---------- Tab Content ----------
     tabContent: {
+        flex: 1,               // let this section fill remaining space
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 24,
         marginHorizontal: 20,
-        marginBottom: 20,
         borderRadius: 8,
-        backgroundColor: '#f7f7f7',
+        // Remove or reduce marginBottom if you want it truly full-height
+        marginBottom: 60,
     },
+
     emptyStateText: {
         fontSize: 15,
         color: colors.textLight,
@@ -450,4 +482,15 @@ const styles = StyleSheet.create({
         color: colors.white,
         fontWeight: '600',
     },
+    gridContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between', // space items evenly
+        // you can also add paddingHorizontal if needed
+    },
+    gridItem: {
+        width: '48%',     // two columns, small gap
+        marginBottom: 16, // spacing between rows
+    },
+
 });
