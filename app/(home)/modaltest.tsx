@@ -22,22 +22,18 @@ import { CATEGORIES, Category } from '@/constants/Categories';
 
 // If you have an enum for categories, define them here (or adjust to your real ones)
 
-
 // Some quick price suggestions
 const PRICE_SUGGESTIONS = ['20', '40', '60'];
 
 // The environment variable you used for your backend
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
-export type TransactionType = 'SALE' | 'SWAP' | 'BOTH';
+export type TransactionType = 'SALE' | 'SWAP' | 'BOTH' | 'FREE';
 
 export default function AddListingScreen() {
     const router = useRouter();
-    const { user } = useUser();           // Current logged-in user
-    const [transactionType, setTransactionType] = useState<TransactionType>('SALE');
-
+    const { user } = useUser(); // Current logged-in user
     const { mutate: createListing } = useCreateListing(); // Hook for creating the listing
-
 
     // Basic form fields
     const [title, setTitle] = useState('');
@@ -46,6 +42,8 @@ export default function AddListingScreen() {
     const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
     const [swapPreferences, setSwapPreferences] = useState('');
 
+    // Transaction type
+    const [transactionType, setTransactionType] = useState<TransactionType>('SALE');
 
     // Show/hide the Picker
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -101,12 +99,12 @@ export default function AddListingScreen() {
         router.back();
     };
 
-    // Submit the form: 
+    // Submit the form:
     // 1) Upload image with SAS
     // 2) Post listing
     const handleSubmit = async () => {
         if (!title || !description || !imageUri || !user?.id) {
-            Alert.alert('Error', 'All fields and image are required');
+            Alert.alert('Error', 'All fields (title, description, image) are required');
             return;
         }
 
@@ -141,17 +139,30 @@ export default function AddListingScreen() {
             // The final image URL is everything before the "?"
             const finalImageUrl = sasUrl.split('?')[0];
 
+            // If transactionType is FREE, set price = 0 (or undefined)
+            let finalPrice: number | undefined;
+            if (transactionType === 'FREE') {
+                finalPrice = 0; // or undefined
+            } else if (transactionType === 'SALE' || transactionType === 'BOTH') {
+                // parse user input price
+                finalPrice = parseFloat(price) || 0;
+            } else {
+                // SWAP or something
+                finalPrice = undefined;
+            }
+
             // 3) Submit the listing (using your react-query hook)
             createListing(
                 {
                     title,
                     description,
-                    price: parseFloat(price) || undefined,
+                    price: finalPrice,
                     transactionType,
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),
-                    imageUrl: finalImageUrl,   // The new image URL
+                    imageUrl: finalImageUrl, // The new image URL
                     category: selectedCategory || 'OTHER',
+                    swapPreferences: swapPreferences || undefined,
                 },
                 {
                     onSuccess: () => {
@@ -182,7 +193,7 @@ export default function AddListingScreen() {
 
             {/* 2) Scrollable form content */}
             <ScrollView contentContainerStyle={styles.scrollContent}>
-
+                {/* Transaction Type Row */}
                 <View style={styles.transactionTypeRow}>
                     <TouchableOpacity
                         onPress={() => setTransactionType('SALE')}
@@ -197,7 +208,7 @@ export default function AddListingScreen() {
                                 transactionType === 'SALE' && styles.segmentButtonTextSelected,
                             ]}
                         >
-                            Sale Only
+                            Sale
                         </Text>
                     </TouchableOpacity>
 
@@ -214,7 +225,7 @@ export default function AddListingScreen() {
                                 transactionType === 'SWAP' && styles.segmentButtonTextSelected,
                             ]}
                         >
-                            Swap Only
+                            Swap
                         </Text>
                     </TouchableOpacity>
 
@@ -234,8 +245,24 @@ export default function AddListingScreen() {
                             Sale or Swap
                         </Text>
                     </TouchableOpacity>
-                </View>
 
+                    <TouchableOpacity
+                        onPress={() => setTransactionType('FREE')}
+                        style={[
+                            styles.segmentButton,
+                            transactionType === 'FREE' && styles.segmentButtonSelected,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.segmentButtonText,
+                                transactionType === 'FREE' && styles.segmentButtonTextSelected,
+                            ]}
+                        >
+                            Free
+                        </Text>
+                    </TouchableOpacity>
+                </View>
 
                 <View style={styles.content}>
                     {/* Title */}
@@ -259,8 +286,7 @@ export default function AddListingScreen() {
                         multiline
                     />
 
-                    {/* Price + suggestions */}
-                    {/* Price Field (only if transactionType is 'sale' or 'both') */}
+                    {/* Price + suggestions (Only if SALE or BOTH) */}
                     {(transactionType === 'SALE' || transactionType === 'BOTH') && (
                         <>
                             <Text style={styles.label}>Price</Text>
@@ -285,9 +311,6 @@ export default function AddListingScreen() {
                             </View>
                         </>
                     )}
-
-
-
 
                     {/* Category */}
                     <Text style={styles.label}>Category</Text>
@@ -340,7 +363,6 @@ export default function AddListingScreen() {
                             />
                         </>
                     )}
-
 
                     {/* Image placeholder + plus icon */}
                     <Text style={styles.label}>Image</Text>
@@ -483,6 +505,35 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 
+    // Transaction Type Row
+    transactionTypeRow: {
+        flexDirection: 'row',
+        marginBottom: 12,
+        justifyContent: 'space-around',
+        marginTop: 8,
+    },
+    segmentButton: {
+        flex: 1,
+        paddingVertical: 10,
+        marginHorizontal: 4,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        backgroundColor: '#f8f8f8',
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    segmentButtonSelected: {
+        backgroundColor: '#E91E63',
+        borderColor: '#E91E63',
+    },
+    segmentButtonText: {
+        color: '#333',
+        fontWeight: '600',
+    },
+    segmentButtonTextSelected: {
+        color: '#fff',
+    },
+
     // Image placeholder row
     imagePickerRow: {
         flexDirection: 'row',
@@ -534,31 +585,4 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: 16,
     },
-    transactionTypeRow: {
-        flexDirection: 'row',
-        marginBottom: 12,
-        justifyContent: 'space-around',
-    },
-    segmentButton: {
-        flex: 1,
-        paddingVertical: 10,
-        marginHorizontal: 4,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        backgroundColor: '#f8f8f8',
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    segmentButtonSelected: {
-        backgroundColor: '#E91E63',
-        borderColor: '#E91E63',
-    },
-    segmentButtonText: {
-        color: '#333',
-        fontWeight: '600',
-    },
-    segmentButtonTextSelected: {
-        color: '#fff',
-    },
-
 });

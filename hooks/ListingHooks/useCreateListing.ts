@@ -15,6 +15,7 @@ interface CreateListingType {
   longitude: number;
   imageUrl: string;
   category: Category;
+  swapPreferences?: string;
 }
 
 export function useCreateListing() {

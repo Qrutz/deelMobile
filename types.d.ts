@@ -28,6 +28,7 @@ export interface Listing {
   user: User; // Nested user object
   isOwner?: boolean;
   transactionType: TransactionType;
+  swapPreferences?: string;
 }
 
 interface Swap {

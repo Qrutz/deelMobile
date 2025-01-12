@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Listing } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
+import { Listing } from '@/types';
+
+// Extend your TransactionType as needed
+type TransactionType = 'SALE' | 'SWAP' | 'BOTH' | 'FREE';
 
 export default function ProductCard({ product }: { product: Listing }) {
     const [liked, setLiked] = useState(false);
@@ -15,6 +18,57 @@ export default function ProductCard({ product }: { product: Listing }) {
         // Pre-fetch or set listing data, then navigate
         queryClient.setQueryData(['listing', product.id], product);
         router.push(`/product/${product.id}`);
+    };
+
+    /** 
+     * Decide what to render in the "price / type" area.
+     * If it's a swap, we may show "SWAP: looking for guitar," etc.
+     * If it's both, we might show the price + “or swap.”
+     */
+    const renderPriceOrSwapLabel = () => {
+        const tType = product.transactionType;
+        const priceVal = product.price || 0; // fallback if undefined
+        const preferences = product.swapPreferences || ''; // e.g. "camera gear"
+
+        // 1) FREE
+        if (tType === 'FREE') {
+            return 'FREE';
+        }
+
+        // 2) SWAP
+        if (tType === 'SWAP') {
+            // If the seller specified preferences
+            if (preferences.trim().length > 0) {
+                return `SWAP: ${preferences}`;
+            }
+            return 'SWAP ONLY';
+        }
+
+        // 3) BOTH (Sale + Swap)
+        if (tType === 'BOTH') {
+            // If we have a price + a preference, show both
+            if (priceVal > 0 && preferences.trim().length > 0) {
+                return `${priceVal} kr • or swap: ${preferences}`;
+            }
+            // If we have just a price
+            if (priceVal > 0) {
+                return `${priceVal} kr • or swap`;
+            }
+            // If the price is 0 but preferences exist
+            if (preferences.trim().length > 0) {
+                return `FREE • or swap: ${preferences}`;
+            }
+            // fallback
+            return 'BOTH: No details';
+        }
+
+        // 4) SALE
+        // If price is 0 or undefined for some reason, default to FREE
+        if (!priceVal) {
+            return 'FREE';
+        } else {
+            return `${priceVal} kr`;
+        }
     };
 
     return (
@@ -33,20 +87,13 @@ export default function ProductCard({ product }: { product: Listing }) {
 
                 {/* Heart Button over bottom-right of the image */}
                 <TouchableOpacity
-                    style={{
-                        position: 'absolute',
-                        bottom: 8,
-                        right: 8,
-                        backgroundColor: 'rgba(0,0,0,0.5)', // dark overlay
-                        borderRadius: 20,
-                        padding: 6,
-                    }}
+                    style={styles.heartButton}
                     onPress={() => setLiked(!liked)}
                 >
                     <Ionicons
                         name={liked ? 'heart' : 'heart-outline'}
                         size={16}
-                        color={'#FFF'} // white heart icon
+                        color="#FFF"
                     />
                 </TouchableOpacity>
             </View>
@@ -57,7 +104,7 @@ export default function ProductCard({ product }: { product: Listing }) {
                     {product.title}
                 </Text>
                 <Text style={styles.price}>
-                    {product.price === 0 ? 'FREE' : `${product.price} kr`}
+                    {renderPriceOrSwapLabel()}
                 </Text>
             </View>
         </TouchableOpacity>
@@ -71,14 +118,14 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: '#FFF',
         borderRadius: CARD_RADIUS,
-        overflow: 'visible', // ensure nothing is clipped
+        overflow: 'visible',
 
-        // Very large shadow
+        // Shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
         shadowRadius: 6,
-        elevation: 12, // bigger elevation for Android
+        elevation: 12,
 
         marginBottom: 24,
         position: 'relative',
@@ -90,14 +137,22 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderTopLeftRadius: CARD_RADIUS,
         borderTopRightRadius: CARD_RADIUS,
-        position: 'relative', // so the heart can be absolutely positioned
+        position: 'relative',
+    },
+
+    heartButton: {
+        position: 'absolute',
+        bottom: 8,
+        right: 8,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        borderRadius: 20,
+        padding: 6,
     },
 
     image: {
         width: '100%',
         height: '100%',
     },
-
 
     bottomContainer: {
         paddingHorizontal: 12,
@@ -114,6 +169,6 @@ const styles = StyleSheet.create({
     price: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#4CAF50', // green for FREE or price
+        color: '#4CAF50',
     },
 });
