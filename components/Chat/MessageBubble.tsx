@@ -47,6 +47,7 @@ export default function MessageBubble({
         isOutgoing ? styles.bubbleOutgoing : styles.bubbleIncoming,
         // If it's a GIF, remove the normal padding
         type === 'gif' && styles.gifNoPadding,
+        type === 'swapProposal' && { padding: 0 }, // Remove padding for SwapProposal
     ];
 
     return (

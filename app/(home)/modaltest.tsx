@@ -29,16 +29,23 @@ const PRICE_SUGGESTIONS = ['20', '40', '60'];
 // The environment variable you used for your backend
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
+export type TransactionType = 'SALE' | 'SWAP' | 'BOTH';
+
 export default function AddListingScreen() {
     const router = useRouter();
     const { user } = useUser();           // Current logged-in user
+    const [transactionType, setTransactionType] = useState<TransactionType>('SALE');
+
     const { mutate: createListing } = useCreateListing(); // Hook for creating the listing
+
 
     // Basic form fields
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
+    const [swapPreferences, setSwapPreferences] = useState('');
+
 
     // Show/hide the Picker
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -98,7 +105,7 @@ export default function AddListingScreen() {
     // 1) Upload image with SAS
     // 2) Post listing
     const handleSubmit = async () => {
-        if (!title || !description || !price || !imageUri || !user?.id) {
+        if (!title || !description || !imageUri || !user?.id) {
             Alert.alert('Error', 'All fields and image are required');
             return;
         }
@@ -139,7 +146,8 @@ export default function AddListingScreen() {
                 {
                     title,
                     description,
-                    price: parseFloat(price),
+                    price: parseFloat(price) || undefined,
+                    transactionType,
                     latitude: parseFloat(latitude),
                     longitude: parseFloat(longitude),
                     imageUrl: finalImageUrl,   // The new image URL
@@ -174,6 +182,61 @@ export default function AddListingScreen() {
 
             {/* 2) Scrollable form content */}
             <ScrollView contentContainerStyle={styles.scrollContent}>
+
+                <View style={styles.transactionTypeRow}>
+                    <TouchableOpacity
+                        onPress={() => setTransactionType('SALE')}
+                        style={[
+                            styles.segmentButton,
+                            transactionType === 'SALE' && styles.segmentButtonSelected,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.segmentButtonText,
+                                transactionType === 'SALE' && styles.segmentButtonTextSelected,
+                            ]}
+                        >
+                            Sale Only
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => setTransactionType('SWAP')}
+                        style={[
+                            styles.segmentButton,
+                            transactionType === 'SWAP' && styles.segmentButtonSelected,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.segmentButtonText,
+                                transactionType === 'SWAP' && styles.segmentButtonTextSelected,
+                            ]}
+                        >
+                            Swap Only
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => setTransactionType('BOTH')}
+                        style={[
+                            styles.segmentButton,
+                            transactionType === 'BOTH' && styles.segmentButtonSelected,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.segmentButtonText,
+                                transactionType === 'BOTH' && styles.segmentButtonTextSelected,
+                            ]}
+                        >
+                            Sale or Swap
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+
                 <View style={styles.content}>
                     {/* Title */}
                     <Text style={styles.label}>Title</Text>
@@ -197,26 +260,34 @@ export default function AddListingScreen() {
                     />
 
                     {/* Price + suggestions */}
-                    <Text style={styles.label}>Price</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={price}
-                        onChangeText={setPrice}
-                        keyboardType="numeric"
-                        placeholder="Enter price (kr)"
-                        placeholderTextColor="#999"
-                    />
-                    <View style={styles.suggestionRow}>
-                        {PRICE_SUGGESTIONS.map((val) => (
-                            <TouchableOpacity
-                                key={val}
-                                style={styles.suggestionButton}
-                                onPress={() => handlePriceSuggestion(val)}
-                            >
-                                <Text style={styles.suggestionText}>{val} kr</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                    {/* Price Field (only if transactionType is 'sale' or 'both') */}
+                    {(transactionType === 'SALE' || transactionType === 'BOTH') && (
+                        <>
+                            <Text style={styles.label}>Price</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={price}
+                                onChangeText={setPrice}
+                                keyboardType="numeric"
+                                placeholder="Enter price (kr)"
+                                placeholderTextColor="#999"
+                            />
+                            <View style={styles.suggestionRow}>
+                                {PRICE_SUGGESTIONS.map((val) => (
+                                    <TouchableOpacity
+                                        key={val}
+                                        style={styles.suggestionButton}
+                                        onPress={() => handlePriceSuggestion(val)}
+                                    >
+                                        <Text style={styles.suggestionText}>{val} kr</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </>
+                    )}
+
+
+
 
                     {/* Category */}
                     <Text style={styles.label}>Category</Text>
@@ -254,6 +325,22 @@ export default function AddListingScreen() {
                             </TouchableOpacity>
                         </View>
                     )}
+
+                    {/* "Willing to Swap For" (only if swap or both) */}
+                    {(transactionType === 'SWAP' || transactionType === 'BOTH') && (
+                        <>
+                            <Text style={styles.label}>Willing to swap for...</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={swapPreferences}
+                                onChangeText={setSwapPreferences}
+                                placeholder="e.g. I'm looking for a guitar, camera gear..."
+                                placeholderTextColor="#999"
+                                multiline
+                            />
+                        </>
+                    )}
+
 
                     {/* Image placeholder + plus icon */}
                     <Text style={styles.label}>Image</Text>
@@ -447,4 +534,31 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: 16,
     },
+    transactionTypeRow: {
+        flexDirection: 'row',
+        marginBottom: 12,
+        justifyContent: 'space-around',
+    },
+    segmentButton: {
+        flex: 1,
+        paddingVertical: 10,
+        marginHorizontal: 4,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        backgroundColor: '#f8f8f8',
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    segmentButtonSelected: {
+        backgroundColor: '#E91E63',
+        borderColor: '#E91E63',
+    },
+    segmentButtonText: {
+        color: '#333',
+        fontWeight: '600',
+    },
+    segmentButtonTextSelected: {
+        color: '#fff',
+    },
+
 });

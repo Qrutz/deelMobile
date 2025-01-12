@@ -2,13 +2,15 @@ import { Listing } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-expo'; // Import Clerk auth hook
 import { Category } from '@/constants/Categories';
+import { TransactionType } from '@/app/(home)/modaltest';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
 interface CreateListingType {
   title: string;
   description: string;
-  price: number;
+  price?: number;
+  transactionType: TransactionType;
   latitude: number;
   longitude: number;
   imageUrl: string;
