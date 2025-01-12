@@ -26,3 +26,12 @@ export interface Listing {
   user: User; // Nested user object
   isOwner?: boolean;
 }
+
+interface Swap {
+  id: string;
+  listingA: Listing;
+  listingB: Listing;
+  proposerId: string;
+  recipientId: string;
+  status: string; // "accepted", "inProgress", "completed", etc.
+}

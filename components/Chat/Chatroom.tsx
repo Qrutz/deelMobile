@@ -15,8 +15,7 @@ import socket from '@/utils/socket';
 import UpgradedHeaderChat from './UpgradedHeaderChat';
 import ChatInputBar from './ChatInput';
 import MessageBubble from './MessageBubble';
-import { User } from '@/types';
-
+import { Listing, User } from '@/types';
 
 interface ChatMember {
     userId: string;
@@ -27,14 +26,23 @@ interface ChatMember {
     };
 }
 
+interface Swap {
+    id: string;
+    listingAId?: { id: number; title: string };
+    listingBId?: { id: number; title: string };
+    ListingA: Listing;
+    ListingB: Listing;
+    status?: string; // "pending" | "accepted" etc.
+}
+
 interface ChatMessage {
     id: string;
     senderId: string;
     createdAt: string;
     content: string;
-    // No more "type" since we only do text
     sender: User;
-    type: 'text' | 'gif' | 'productCard';
+    type: 'text' | 'gif' | 'productCard' | 'swapProposal';
+    swap?: Swap;
 }
 
 interface ChatDetails {
@@ -57,9 +65,6 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(true);
 
-
-    console.log(messages);
-
     useEffect(() => {
         if (!user) return;
 
@@ -74,10 +79,30 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
             setLoading(false);
         });
 
-        // Listen for new text messages
+        // Listen for new messages
         socket.on('newMessage', (msg: ChatMessage) => {
-            console.log('New message:', msg);
             setMessages((prev) => [...prev, msg]);
+        });
+
+        // Listen for swap updates
+        socket.on('swapUpdated', (updatedSwap: Swap) => {
+            console.log('Swap updated:', updatedSwap);
+            // 1) Find the message whose swapId matches updatedSwap.id
+            // 2) Update that message's swap.status
+            setMessages((prev) =>
+                prev.map((m) => {
+                    if (m.type === 'swapProposal' && m.swap && m.swap.id === updatedSwap.id) {
+                        return {
+                            ...m,
+                            swap: {
+                                ...m.swap,
+                                status: updatedSwap.status,
+                            },
+                        };
+                    }
+                    return m;
+                })
+            );
         });
 
         // Listen for errors
@@ -86,12 +111,13 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
             Alert.alert('Error', err.message);
         });
 
-        // Cleanup when unmounting
+        // Cleanup
         return () => {
             if (user) {
                 socket.emit('leaveChat', { chatId, userId: user.id });
                 socket.off('chatDetails');
                 socket.off('newMessage');
+                socket.off('swapUpdated');
                 socket.off('error');
             }
         };
@@ -108,18 +134,14 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
 
     const currentUserId = user.id;
 
-    // Decide how to show header: group or 1-on-1
+    // Decide how to show the header
     let headerTitle = 'Group Chat';
     let headerAvatar = 'https://via.placeholder.com/150';
     const isGroupChat = chatData?.isGroup || false;
 
-    // If group has a name, display it
     if (isGroupChat && chatData?.name) {
         headerTitle = chatData.name;
-    }
-
-    // If it's not a group and exactly 2 members, get the other user
-    if (!isGroupChat && chatData?.members.length === 2) {
+    } else if (!isGroupChat && chatData?.members.length === 2) {
         const otherMember = chatData.members.find((m) => m.userId !== currentUserId);
         if (otherMember) {
             headerTitle = otherMember.user.name;
@@ -127,11 +149,9 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
         }
     }
 
-    // Handle sending text messages
+    // Handle sending normal text / GIF
     const handleSendMessage = (text: string, type: 'text' | 'gif') => {
         if (!text.trim()) return;
-
-        // Emit the message
         socket.emit('sendMessage', {
             chatId,
             senderId: currentUserId,
@@ -140,54 +160,87 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
         });
     };
 
-    // Render each message bubble
+    // Handle Accept Swap
+    const handleAcceptSwap = (swapId?: string) => {
+        if (!swapId) return;
+        // You must include userId, chatId, etc. depending on your server logic
+        socket.emit('acceptSwap', {
+            swapId,
+            userId: currentUserId,
+            chatId,
+        });
+    };
+
+    // Handle Decline Swap
+    const handleDeclineSwap = (swapId?: string) => {
+        if (!swapId) return;
+        socket.emit('declineSwap', {
+            swapId,
+            userId: currentUserId,
+            chatId,
+        });
+    };
+
+    // Render each message
     const renderItem = ({ item }: { item: ChatMessage }) => {
         const isOutgoing = item.senderId === currentUserId;
 
-        if (item.type === 'productCard') {
-            // Parse the JSON content
-            let productData: any;
-            try {
-                productData = JSON.parse(item.content);
-            } catch {
-                productData = {}; // fallback
+        switch (item.type) {
+            case 'productCard': {
+                let productData: any;
+                try {
+                    productData = JSON.parse(item.content);
+                } catch {
+                    productData = {};
+                }
+                return (
+                    <MessageBubble
+                        isOutgoing={isOutgoing}
+                        type="productCard"
+                        productData={productData}
+                        senderName={item.sender.name}
+                        avatarUrl={item.sender.profileImageUrl || ''}
+                    />
+                );
             }
-
-            // Then pass a prop `isProductCard`
-            return (
-                <MessageBubble
-                    isOutgoing={isOutgoing}
-                    type="productCard"
-                    productData={productData}
-                    senderName={item.sender.name}
-                    avatarUrl={item.sender.profileImageUrl!}
-                />
-            );
-        } else if (item.type === 'gif') {
-            // existing logic
-            return (
-                <MessageBubble
-                    isOutgoing={isOutgoing}
-                    type="gif"
-                    content={item.content}
-                    senderName={item.sender.name}
-                    avatarUrl={item.sender.profileImageUrl!}
-                />
-            );
-        } else {
-            // normal text
-            return (
-                <MessageBubble
-                    isOutgoing={isOutgoing}
-                    type="text"
-                    content={item.content}
-                    senderName={item.sender.name}
-                    avatarUrl={item.sender.profileImageUrl!}
-                />
-            );
+            case 'gif': {
+                return (
+                    <MessageBubble
+                        isOutgoing={isOutgoing}
+                        type="gif"
+                        content={item.content}
+                        senderName={item.sender.name}
+                        avatarUrl={item.sender.profileImageUrl || ''}
+                    />
+                );
+            }
+            case 'swapProposal': {
+                // We'll pass item.swap, along with accept/decline callbacks
+                return (
+                    <MessageBubble
+                        isOutgoing={isOutgoing}
+                        type="swapProposal"
+                        swapData={item.swap!}
+                        senderName={item.sender.name}
+                        avatarUrl={item.sender.profileImageUrl || ''}
+                        onAcceptSwap={() => handleAcceptSwap(item.swap?.id)}
+                        onDeclineSwap={() => handleDeclineSwap(item.swap?.id)}
+                    />
+                );
+            }
+            default:
+                // normal text
+                return (
+                    <MessageBubble
+                        isOutgoing={isOutgoing}
+                        type="text"
+                        content={item.content}
+                        senderName={item.sender.name}
+                        avatarUrl={item.sender.profileImageUrl || ''}
+                    />
+                );
         }
     };
-
 
     if (loading) {
         return (
@@ -206,7 +259,7 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
             <UpgradedHeaderChat
                 sellerName={headerTitle}
                 sellerAvatar={headerAvatar}
-                isOnline={true} // or real condition
+                isOnline={true} // or real logic
                 onBackPress={onBackPress}
             />
 
@@ -220,12 +273,10 @@ export default function ChatScreenBase({ chatId, onBackPress }: ChatScreenBasePr
                     // Scroll to bottom when new messages arrive
                     setTimeout(() => {
                         if (messages.length > 0) {
-                            // @ts-ignore
-                            flatListRef.current.scrollToEnd();
+                            flatListRef.current?.scrollToEnd();
                         }
                     }, 100);
-                }
-                }
+                }}
             />
 
             <ChatInputBar onSendMessage={handleSendMessage} />
@@ -239,20 +290,5 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    msgBubble: {
-        maxWidth: '70%',
-        padding: 10,
-        borderRadius: 10,
-        marginVertical: 4,
-    },
-    msgText: { color: '#333' },
-    outgoing: {
-        alignSelf: 'flex-end',
-        backgroundColor: '#ffd4e5',
-    },
-    incoming: {
-        alignSelf: 'flex-start',
-        backgroundColor: '#fce5ff',
     },
 });

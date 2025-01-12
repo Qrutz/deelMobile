@@ -146,7 +146,7 @@ export default function ProductPage() {
                     <TouchableOpacity onPress={
                         () => router.push({
                             pathname: '/proposeTradeModal',
-                            params: { listingId: listing.id }, // pass any needed param
+                            params: { listingId: listing.id, recipientId: listing.userId }, // pass any needed param
                         })
                     }
                         style={styles.swapButton}>

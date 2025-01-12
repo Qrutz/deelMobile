@@ -1,27 +1,45 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import ProductCardBubble from './ProductCardBubble';
 import { Image } from 'expo-image';
 
+import ProductCardBubble from './ProductCardBubble';
+import SwapProposalBubble from './SwapProposalBubble';
+
 interface MessageBubbleProps {
-    type: 'text' | 'gif' | 'productCard';
+    type: 'text' | 'gif' | 'productCard' | 'swapProposal';
     content?: string;
     productData?: any;
+
+    // Add this prop for swap proposals
+    swapData?: {
+        listingA?: { id: number; title: string };
+        listingB?: { id: number; title: string };
+        status?: string; // "pending" | "accepted" etc.
+        // You could add more fields if needed
+    };
+
     isOutgoing: boolean;
     senderName?: string;
     avatarUrl?: string;
+
+    // Optionally accept/decline callbacks
+    onAcceptSwap?: () => void;
+    onDeclineSwap?: () => void;
 }
 
 export default function MessageBubble({
     type,
     content,
     productData,
+    swapData,
     isOutgoing,
     senderName,
     avatarUrl,
+    onAcceptSwap,
+    onDeclineSwap,
 }: MessageBubbleProps) {
     // We'll remove the avatar if it's isOutgoing
-    const shouldShowAvatar = !isOutgoing && avatarUrl;
+    const shouldShowAvatar = !isOutgoing && !!avatarUrl;
 
     // Adjust bubble styles
     const bubbleStyles = [
@@ -48,17 +66,33 @@ export default function MessageBubble({
                 )}
 
                 <View style={bubbleStyles}>
+                    {/* 1) Product Card */}
                     {type === 'productCard' && productData ? (
                         <ProductCardBubble productData={productData} />
-                    ) : type === 'gif' && content ? (
-                        <Image
-                            source={{ uri: content }}
-                            style={styles.gifImage}
-                            contentFit='cover'
-                        />
-                    ) : (
-                        <Text style={styles.bubbleText}>{content}</Text>
-                    )}
+
+                    ) : /* 2) GIF */
+                        type === 'gif' && content ? (
+                            <Image
+                                source={{ uri: content }}
+                                style={styles.gifImage}
+                                contentFit='cover'
+                            />
+
+                        ) : /* 3) Swap Proposal */
+                            type === 'swapProposal' && swapData ? (
+                                <SwapProposalBubble
+                                    listingA={swapData.listingA}
+                                    listingB={swapData.listingB}
+                                    status={swapData.status}
+                                    onAcceptSwap={onAcceptSwap}
+                                    onDeclineSwap={onDeclineSwap}
+                                    isOutgoing={isOutgoing}
+                                />
+
+                            ) : (
+                                /* 4) Default text message */
+                                <Text style={styles.bubbleText}>{content}</Text>
+                            )}
                 </View>
             </View>
         </View>

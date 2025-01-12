@@ -12,6 +12,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFetchUserListings } from '@/hooks/ListingHooks/useFetchMyListings';
+import { useAuth } from '@clerk/clerk-expo';
 
 /** Example shape for an item the user can offer in a swap */
 interface UserItem {
@@ -23,42 +24,67 @@ interface UserItem {
 export default function SwapModal() {
     // 1) Retrieve the listing or other relevant info from route params
     // e.g., /swap-modal?listingId=123
-    const { listingId } = useLocalSearchParams();
+    const { listingId, recipientId } = useLocalSearchParams();
     const router = useRouter();
 
     const { data: userItems, isLoading } = useFetchUserListings();
+    const { getToken } = useAuth(); // to get Clerk token
 
-    // 2) Local states
     const [selectedItems, setSelectedItems] = useState<UserItem[]>([]);
-
     const [note, setNote] = useState('');
 
-    // 3) Suppose we fetch the user’s available items for a swap
-    //    (You’d call your own API or local data)
+    // 3) Call the backend in handleSendSwap
+    const handleSendSwap = async () => {
+        if (!listingId || !recipientId) {
+            alert('Missing listingId or recipientId.');
+            return;
+        }
+        if (selectedItems.length === 0) {
+            alert('Please select at least one item to offer.');
+            return;
+        }
 
+        const listingAId = selectedItems[0].id; // or handle multiple if your API supports it
+        const listingBId = Number(listingId);   // if your param is a string, convert to number
 
-    // 4) Toggling selection of items to swap
-    const toggleItemSelection = (item: UserItem) => {
-        const alreadySelected = selectedItems.find((it) => it.id === item.id);
-        if (alreadySelected) {
-            // remove
-            setSelectedItems((prev) => prev.filter((it) => it.id !== item.id));
-        } else {
-            // add
-            setSelectedItems((prev) => [...prev, item]);
+        try {
+            const token = await getToken();
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/swap`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    listingAId,
+                    listingBId,
+                    recipientId, // must match listingB's owner
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(`Swap failed: ${errorData?.error || 'Unknown error'}`);
+                return;
+            }
+
+            // If successful
+            const swapResult = await response.json();
+            console.log('Swap created:', swapResult);
+            alert('Swap proposed successfully!');
+
+            // router.push({
+            //     pathname: '/chat/[id]',
+            //     params: { id: response.chatId },
+            // });
+            router.back();
+
+        } catch (error) {
+            console.error('Error proposing swap:', error);
+            alert('Failed to propose swap. Please try again later.');
         }
     };
 
-    // 5) Handling “Send Swap Request”
-    const handleSendSwap = () => {
-        // Typically, you'd call your API or use socket to finalize the swap request
-        console.log('Swap requested for listingId:', listingId);
-        console.log('Offering items:', selectedItems);
-        console.log('User note:', note);
-
-        // For now, just close the modal
-        router.back();
-    };
 
     // 6) If still loading user’s items
     if (isLoading) {
@@ -95,7 +121,13 @@ export default function SwapModal() {
                     return (
                         <TouchableOpacity
                             style={[styles.itemRow, isSelected && styles.itemRowSelected]}
-                            onPress={() => toggleItemSelection(item)}
+                            onPress={() => {
+                                setSelectedItems((prev) =>
+                                    isSelected
+                                        ? prev.filter((it) => it.id !== item.id)
+                                        : [...prev, item],
+                                );
+                            }}
                         >
                             <Text style={[styles.itemTitle, isSelected && styles.itemTitleSelected]}>
                                 {item.title}
