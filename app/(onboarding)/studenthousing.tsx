@@ -112,7 +112,7 @@ export default function StudentHousingScreen() {
             }
 
             // Move to final step
-            router.push('/(onboarding)/Final');
+            router.push('/(onboarding)/location');
         } catch (error) {
             console.error('Error during submission:', error);
             Alert.alert('Error', 'Could not save housing or join chat.');
