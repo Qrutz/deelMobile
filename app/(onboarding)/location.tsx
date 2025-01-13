@@ -11,21 +11,23 @@ import { Ionicons } from '@expo/vector-icons';
 import MapView, { Circle, Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import Slider from '@react-native-community/slider';
-// or distance buttons if you prefer
-// import { ScrollView } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
+import { useRouter } from 'expo-router'; // to navigate
+
+const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
 export default function OnboardingLocationScreen() {
-    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
-        null
-    );
+    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const { getToken } = useAuth(); // Clerk token
+    const router = useRouter();     // expo-router
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    // radius in meters, default 1000 (1km)
-    const [radius, setRadius] = useState(1000);
+    // radius in meters, default 500m
+    const [radius, setRadius] = useState(500);
 
     // For the map region
     const [mapRegion, setMapRegion] = useState<Region>({
-        latitude: 37.78825, // some default
+        latitude: 37.78825, // default coords
         longitude: -122.4324,
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
@@ -34,14 +36,14 @@ export default function OnboardingLocationScreen() {
     useEffect(() => {
         (async () => {
             // 1) Request location permission
-            let { status } = await Location.requestForegroundPermissionsAsync();
+            const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 setErrorMsg('Permission to access location was denied');
                 return;
             }
 
             // 2) Get current position
-            let current = await Location.getCurrentPositionAsync({});
+            const current = await Location.getCurrentPositionAsync({});
             const lat = current.coords.latitude;
             const lng = current.coords.longitude;
 
@@ -55,7 +57,7 @@ export default function OnboardingLocationScreen() {
         })();
     }, []);
 
-    // If location perms denied or something else went wrong
+    // If location perms denied or some other error
     if (errorMsg) {
         return (
             <View style={styles.centered}>
@@ -65,7 +67,7 @@ export default function OnboardingLocationScreen() {
                     style={styles.retryButton}
                     onPress={() => {
                         setErrorMsg(null);
-                        // Trigger re-check or navigate to a fallback
+                        // Could re-request permissions or show fallback UI
                     }}
                 >
                     <Text style={styles.retryText}>Retry</Text>
@@ -74,18 +76,41 @@ export default function OnboardingLocationScreen() {
         );
     }
 
-    // The user can confirm the chosen radius
-    const handleConfirm = () => {
-        // 3) Save or store in user profile
-        // For demonstration, just an alert
-        Alert.alert(
-            'Radius Selected',
-            `You chose ${radius} meters. We'll show listings within ~${Math.round(
-                radius / 1000
-            )} km.`
-        );
-        // Then navigate to the next onboarding step
-        // e.g. navigation.navigate('OnboardingDone');
+    const handleConfirm = async () => {
+        try {
+            const token = await getToken();
+            if (!token) {
+                Alert.alert('Error', 'Missing token');
+                return;
+            }
+
+            // 3) Save radius to backend
+            const response = await fetch(`${API_URL}/user/radius`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ radius }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                Alert.alert('Error', errorData.error || 'Failed to update radius');
+                return;
+            }
+
+            // Success
+            Alert.alert(
+                'Radius Updated',
+                `You chose ${radius} meters (~${(radius / 1000).toFixed(1)} km).`
+            );
+            // Navigate to next onboarding step or main feed
+            router.push('/(onboarding)/Final'); // or '/onboardingDone', etc.
+        } catch (error) {
+            console.error('Error saving radius:', error);
+            Alert.alert('Error', 'Something went wrong while saving your radius.');
+        }
     };
 
     // A helper to convert radius in meters to a user-friendly label (like "2.5 km")
@@ -129,26 +154,6 @@ export default function OnboardingLocationScreen() {
                 </MapView>
             )}
 
-            {/* If you prefer buttons:
-        <ScrollView horizontal style={{ marginBottom: 20 }}>
-          {[500, 1000, 2000, 3000].map((val) => (
-            <TouchableOpacity
-              key={val}
-              style={[
-                styles.distanceButton,
-                radius === val && styles.distanceButtonSelected,
-              ]}
-              onPress={() => setRadius(val)}
-            >
-              <Text style={styles.distanceButtonText}>
-                {formatRadiusLabel(val)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView> 
-      */}
-
-            {/* Using a slider for dynamic radius selection */}
             <View style={styles.sliderRow}>
                 <Text style={styles.sliderLabel}>{formatRadiusLabel(radius)}</Text>
                 <Slider
@@ -174,7 +179,7 @@ export default function OnboardingLocationScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFF8E1', // a warm pastel yellow for that playful vibe
+        backgroundColor: '#FFF8E1', // warm pastel yellow
         paddingTop: 40,
         paddingHorizontal: 16,
     },
@@ -238,27 +243,11 @@ const styles = StyleSheet.create({
     retryButton: {
         marginTop: 14,
         padding: 12,
-        backgroundColor: '#F06292', // pinkish
+        backgroundColor: '#F06292',
         borderRadius: 6,
     },
     retryText: {
         color: '#fff',
         fontWeight: '700',
-    },
-
-    // If using horizontal distance buttons:
-    distanceButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        backgroundColor: '#FFE0B2',
-        borderRadius: 20,
-        marginRight: 8,
-    },
-    distanceButtonSelected: {
-        backgroundColor: '#F57C00', // orange accent
-    },
-    distanceButtonText: {
-        color: '#333',
-        fontWeight: '600',
     },
 });
