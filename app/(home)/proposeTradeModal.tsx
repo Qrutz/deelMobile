@@ -23,6 +23,7 @@ import PartialCashInput from '@/components/ProposeDeal/PartialCashInput';
 import DealNoteInput from '@/components/ProposeDeal/DealNoteInput';
 import ConfirmButton from '@/components/ProposeDeal/ConfirmButton';
 import SingleItemSelectorModal from '@/components/ProposeDeal/SingleItemSelectorModal';
+import PickupDateInput from '@/components/ProposeDeal/PickupDateInput';
 
 export default function DealBuilderScreen() {
     const { listingId, recipientId } = useLocalSearchParams();
@@ -40,6 +41,8 @@ export default function DealBuilderScreen() {
     const [partialCash, setPartialCash] = useState('');
     const [note, setNote] = useState('');
     const [showItemModal, setShowItemModal] = useState(false);
+    const [pickupDate, setPickupDate] = useState<Date | null>(null); // new date state
+
 
     // Single item selection
     const handleSelectItem = (item: Listing) => {
@@ -73,6 +76,7 @@ export default function DealBuilderScreen() {
                     listingBId: Number(listingId),
                     recipientId,
                     partialCash: Number(partialCash) || 0,
+                    pickupTime: pickupDate,
                     note,
                 }),
             });
@@ -133,23 +137,11 @@ export default function DealBuilderScreen() {
                 </View>
                 <View style={styles.divider} />
 
-                {/* Pickup Date Section */}
-                <View style={styles.pickupContainer}>
-                    <Text style={styles.pickupLabel}>Pickup Date/Time</Text>
-                    <View style={styles.pickupRow}>
-                        {/* a text input or a "choose date" button, up to you */}
-                        <TextInput
-                            style={styles.pickupInput}
-                            // value={pickupDate}
-                            // onChangeText={setPickupDate}
-                            placeholder="e.g. March 25 @ 3:00PM"
-                            placeholderTextColor="#aaa"
-                        />
-                        <TouchableOpacity style={styles.calendarButton} >
-                            <Ionicons name="calendar-outline" size={20} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
+
+
+                {/* 3) Pickup Date Input (NEW) */}
+                <PickupDateInput pickupDate={pickupDate} onChangeDate={setPickupDate} />
+
 
                 <DealNoteInput note={note} onChangeNote={setNote} />
 
@@ -157,10 +149,11 @@ export default function DealBuilderScreen() {
                 {/* Confirm Button */}
 
 
-                <ConfirmButton label="Confirm Exchange" onPress={handleSendDeal}>
-                    {/* You could place a custom icon here if you want */}
-                </ConfirmButton>
+
             </ScrollView >
+            <ConfirmButton label="Confirm Exchange" onPress={handleSendDeal}>
+                {/* You could place a custom icon here if you want */}
+            </ConfirmButton>
 
 
             {/* Single item selection modal */}
