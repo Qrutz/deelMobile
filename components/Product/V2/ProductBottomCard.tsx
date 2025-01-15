@@ -21,7 +21,7 @@ interface ProductBottomCardProps {
     sellerRating?: number;
     sellerProfileImg?: string;
     onPressChat?: () => void;
-    onPressMakeOffer?: () => void; // Not used here because CTA is pinned in parent
+    location?: string;
 }
 
 export default function ProductBottomCard({
@@ -37,19 +37,19 @@ export default function ProductBottomCard({
     sellerRating = 4.9,
     sellerProfileImg,
     onPressChat,
+    location = '',
 }: ProductBottomCardProps) {
 
+    // Build distance label + icon
     const distanceLabel = distance ? `${distance.toFixed(1)} km away` : '';
     const conditionLabel = condition || 'Unknown';
     const valueLabel = approximateValue ? `$${approximateValue.toFixed(0)}` : 'N/A';
 
     return (
         <View style={styles.bottomCard}>
-            {/* Scrollable content */}
-            <ScrollView
-                style={styles.scrollArea}
-                contentContainerStyle={styles.scrollContent}
-            >
+            <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+
+                {/* optional drag handle */}
                 <View style={styles.handleBar} />
 
                 {/* SELLER ROW */}
@@ -65,7 +65,7 @@ export default function ProductBottomCard({
                         />
                         <View style={{ marginLeft: 8 }}>
                             <Text style={styles.sellerName}>{sellerName}</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <View style={styles.ratingRow}>
                                 <Ionicons name="star" size={17} color="#ff1493" />
                                 <Text style={styles.sellerRating}>
                                     {sellerRating.toFixed(1)}
@@ -73,6 +73,7 @@ export default function ProductBottomCard({
                             </View>
                         </View>
                     </View>
+
                     {/* Chat bubble on the right */}
                     <View style={styles.sellerRight}>
                         <View style={styles.chatBubble}>
@@ -80,34 +81,71 @@ export default function ProductBottomCard({
                         </View>
                     </View>
                 </View>
-                {/* Title & distance row */}
+                {/* END SELLER ROW */}
+
+                {/* TITLE + DISTANCE ROW */}
                 <View style={styles.titleRow}>
                     <Text style={styles.titleText} numberOfLines={1}>
                         {title}
                     </Text>
-                    {!!distanceLabel && (
-                        <Text style={styles.distanceText}>{distanceLabel}</Text>
+
+                    {/* If distance > 0, show location icon + text */}
+                    {distance > 0 && (
+                        <View style={styles.distanceRow}>
+                            <Ionicons
+                                name="location-outline"
+                                size={16}
+                                color="#666"
+                                style={{ marginRight: 4 }}
+                            />
+                            <Text style={styles.distanceText}>{distanceLabel}</Text>
+                        </View>
                     )}
                 </View>
-                {/* Condition / Value / Swap Prefs */}
-                <Text style={styles.attribute}>
-                    Condition: <Text style={styles.bold}>{conditionLabel}</Text>
-                </Text>
-                <Text style={styles.attribute}>
-                    Value: <Text style={styles.bold}>{valueLabel}</Text>
-                </Text>
-                <Text style={styles.attribute}>
-                    Looking for: <Text style={styles.bold}>{swapPrefs}</Text>
-                </Text>
 
-                {/* Description */}
-                <Text style={styles.descLabel}>Description</Text>
-                <Text style={styles.descText}>{description}</Text>
+                {/* DESCRIPTION as an info row for consistency */}
+                <View style={styles.infoRowSpaceBetween}>
+                    <View style={styles.rowLeft}>
+                        <Text style={styles.infoLabel}>Description</Text>
+                        <Text style={styles.infoValue}>{description}</Text>
+                    </View>
+                    {/* Could leave the right side empty or repurpose it */}
+                    <View style={styles.rowRight} />
+                </View>
+
+                {/* TWO ROWS: Product Value vs Condition, Looking for vs Location */}
+                <View style={styles.infoRowSpaceBetween}>
+                    <View style={styles.rowLeft}>
+                        <Text style={styles.infoLabel}>Product Value</Text>
+                        <Text style={styles.infoValue}>{valueLabel}</Text>
+                    </View>
+
+                    <View style={styles.rowRight}>
+                        <Text style={styles.infoLabel}>Condition</Text>
+                        <Text style={styles.infoValue}>{conditionLabel}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.infoRowSpaceBetween}>
+                    <View style={styles.rowLeft}>
+                        <Text style={styles.infoLabel}>Interested to trade with</Text>
+                        <Text style={styles.infoValue}>{swapPrefs}</Text>
+                    </View>
+
+                    <View style={styles.rowRight}>
+                        <Text style={styles.infoLabel}>Location</Text>
+                        <Text style={styles.infoValue}>{location || 'Unknown'}</Text>
+                    </View>
+                </View>
+
+                {/* Add more rows or info as needed */}
+
             </ScrollView>
         </View>
     );
 }
 
+/* =========== STYLES =========== */
 const styles = StyleSheet.create({
     bottomCard: {
         flex: 1,
@@ -127,7 +165,7 @@ const styles = StyleSheet.create({
         paddingTop: 12,
     },
     scrollContent: {
-        paddingBottom: 80, // space in case we had a pinned CTA inside, but in this approach we keep CTA in parent
+        paddingBottom: 100,
     },
     handleBar: {
         alignSelf: 'center',
@@ -137,12 +175,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#ccc',
         marginBottom: 12,
     },
+
     // Seller row
     sellerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     sellerLeft: {
         flexDirection: 'row',
@@ -158,11 +197,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#333',
+        marginBottom: 2,
+    },
+    ratingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     sellerRating: {
         fontSize: 15,
         fontWeight: '500',
         color: '#333',
+        marginLeft: 4,
     },
     sellerRight: {},
     chatBubble: {
@@ -170,12 +215,13 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 8,
     },
-    // Title & distance
+
+    // Title
     titleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 10,
     },
     titleText: {
         fontSize: 20,
@@ -183,30 +229,41 @@ const styles = StyleSheet.create({
         color: '#333',
         maxWidth: '65%',
     },
+
+    // Distance row
+    distanceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     distanceText: {
         fontSize: 14,
         color: '#666',
     },
-    // Condition, Value, etc.
-    attribute: {
+
+    /* infoRow with space-between */
+    infoRowSpaceBetween: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    rowLeft: {
+        flex: 1,
+        marginRight: 8,
+    },
+    rowRight: {
+        flex: 1,
+        alignItems: 'flex-end',
+    },
+
+    infoLabel: {
         fontSize: 14,
-        color: '#444',
-        marginBottom: 4,
+        fontWeight: '800',
+        color: '#666',
+        marginBottom: 2,
     },
-    bold: {
-        fontWeight: '600',
-    },
-    // Description
-    descLabel: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#333',
-        marginTop: 8,
-        marginBottom: 4,
-    },
-    descText: {
+    infoValue: {
         fontSize: 14,
         lineHeight: 20,
-        color: '#555',
+        color: '#333',
     },
 });
