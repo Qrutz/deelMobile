@@ -50,7 +50,7 @@ export default function ProductBottomCard({
             <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
 
                 {/* optional drag handle */}
-                <View style={styles.handleBar} />
+                {/* <View style={styles.handleBar} /> */}
 
                 {/* SELLER ROW */}
                 <View style={styles.sellerRow}>
@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 6,
+        paddingTop: 6,
     },
     scrollArea: {
         flex: 1,
@@ -167,21 +168,13 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 100,
     },
-    handleBar: {
-        alignSelf: 'center',
-        width: 40,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: '#ccc',
-        marginBottom: 12,
-    },
 
     // Seller row
     sellerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 16,
+        marginBottom: 25,
     },
     sellerLeft: {
         flexDirection: 'row',
@@ -212,8 +205,9 @@ const styles = StyleSheet.create({
     sellerRight: {},
     chatBubble: {
         backgroundColor: '#000',
-        borderRadius: 20,
+        borderRadius: 40,
         padding: 8,
+        paddingHorizontal: 25,
     },
 
     // Title

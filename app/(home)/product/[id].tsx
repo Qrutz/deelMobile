@@ -97,14 +97,14 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         backgroundColor: '#fff',
-        borderTopWidth: 1,
+
         borderColor: '#eee',
-        padding: 16,
+        padding: 10,
     },
     ctaButton: {
-        backgroundColor: '#E91E63',
+        backgroundColor: '#ff1493',
         borderRadius: 8,
-        paddingVertical: 14,
+        paddingVertical: 18,
         alignItems: 'center',
     },
     ctaText: {
