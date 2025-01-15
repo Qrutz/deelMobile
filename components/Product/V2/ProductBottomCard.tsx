@@ -43,7 +43,7 @@ export default function ProductBottomCard({
     // Build distance label + icon
     const distanceLabel = distance ? `${distance.toFixed(1)} km away` : '';
     const conditionLabel = condition || 'Unknown';
-    const valueLabel = approximateValue ? `$${approximateValue.toFixed(0)}` : 'N/A';
+    const valueLabel = approximateValue ? `${approximateValue.toFixed(0) + ' kr'}` : 'N/A';
 
     return (
         <View style={styles.bottomCard}>
