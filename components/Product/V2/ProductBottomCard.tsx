@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     ScrollView,
     Image,
 } from 'react-native';
@@ -17,13 +16,12 @@ interface ProductBottomCardProps {
     swapPrefs: string;
     description: string;
     isListingOwner: boolean;
-    onPressMakeOffer: () => void;
 
-    // NEW: Seller info
     sellerName?: string;
-    sellerRating?: number;        // optional rating, e.g., 4.9
-    sellerProfileImg?: string;    // a URL to their avatar
-    onPressChat?: () => void;     // tap chat bubble
+    sellerRating?: number;
+    sellerProfileImg?: string;
+    onPressChat?: () => void;
+    onPressMakeOffer?: () => void; // Not used here because CTA is pinned in parent
 }
 
 export default function ProductBottomCard({
@@ -34,7 +32,6 @@ export default function ProductBottomCard({
     swapPrefs,
     description,
     isListingOwner,
-    onPressMakeOffer,
 
     sellerName = 'Design house',
     sellerRating = 4.9,
@@ -48,54 +45,41 @@ export default function ProductBottomCard({
 
     return (
         <View style={styles.bottomCard}>
-
-            {/* Scrollable content (for item info) */}
+            {/* Scrollable content */}
             <ScrollView
                 style={styles.scrollArea}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* (Optional) Drag handle */}
                 <View style={styles.handleBar} />
 
-                {/* ------ SELLER ROW SECTION ------ */}
+                {/* SELLER ROW */}
                 <View style={styles.sellerRow}>
                     <View style={styles.sellerLeft}>
-                        {/* Seller avatar (if provided) */}
                         <Image
-                            source={sellerProfileImg
-                                ? { uri: sellerProfileImg }
-                                : require('../../../assets/images/favicon.png') // fallback
+                            source={
+                                sellerProfileImg
+                                    ? { uri: sellerProfileImg }
+                                    : null
                             }
                             style={styles.sellerAvatar}
                         />
-                        <View style={{ marginLeft: 8, flexDirection: 'column', gap: 6 }}>
+                        <View style={{ marginLeft: 8 }}>
                             <Text style={styles.sellerName}>{sellerName}</Text>
-                            {/* rating or anything else */}
-
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-
                                 <Ionicons name="star" size={17} color="#ff1493" />
-
                                 <Text style={styles.sellerRating}>
                                     {sellerRating.toFixed(1)}
                                 </Text>
-
                             </View>
                         </View>
                     </View>
-
                     {/* Chat bubble on the right */}
                     <View style={styles.sellerRight}>
-                        <TouchableOpacity
-                            style={styles.chatBubble}
-                            onPress={onPressChat}
-                        >
+                        <View style={styles.chatBubble}>
                             <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
-                        </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
-                {/* ------ /SELLER ROW SECTION ------ */}
-
                 {/* Title & distance row */}
                 <View style={styles.titleRow}>
                     <Text style={styles.titleText} numberOfLines={1}>
@@ -105,7 +89,6 @@ export default function ProductBottomCard({
                         <Text style={styles.distanceText}>{distanceLabel}</Text>
                     )}
                 </View>
-
                 {/* Condition / Value / Swap Prefs */}
                 <Text style={styles.attribute}>
                     Condition: <Text style={styles.bold}>{conditionLabel}</Text>
@@ -121,38 +104,31 @@ export default function ProductBottomCard({
                 <Text style={styles.descLabel}>Description</Text>
                 <Text style={styles.descText}>{description}</Text>
             </ScrollView>
-
         </View>
     );
 }
 
-/** ============== STYLES ============== **/
 const styles = StyleSheet.create({
     bottomCard: {
+        flex: 1,
         backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         position: 'relative',
-
-        // shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 6,
     },
-
-    // Scroll container
     scrollArea: {
         flex: 1,
         paddingHorizontal: 16,
         paddingTop: 12,
     },
     scrollContent: {
-        paddingBottom: 100, // extra space if CTA is pinned below
+        paddingBottom: 80, // space in case we had a pinned CTA inside, but in this approach we keep CTA in parent
     },
-
-    // Optional handle bar
     handleBar: {
         alignSelf: 'center',
         width: 40,
@@ -161,13 +137,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#ccc',
         marginBottom: 12,
     },
-
-    // SELLER ROW
+    // Seller row
     sellerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 20,
+        marginBottom: 12,
     },
     sellerLeft: {
         flexDirection: 'row',
@@ -176,27 +151,24 @@ const styles = StyleSheet.create({
     sellerAvatar: {
         width: 42,
         height: 42,
-        borderRadius: 20,
+        borderRadius: 21,
         backgroundColor: '#eee',
     },
     sellerName: {
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '600',
         color: '#333',
     },
     sellerRating: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '500',
         color: '#333',
     },
-    sellerRight: {
-        // Possibly some extra margin or styling
-    },
+    sellerRight: {},
     chatBubble: {
         backgroundColor: '#000',
         borderRadius: 20,
         padding: 8,
-        paddingHorizontal: 26,
     },
     // Title & distance
     titleRow: {
@@ -215,7 +187,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
     },
-
     // Condition, Value, etc.
     attribute: {
         fontSize: 14,
@@ -225,7 +196,6 @@ const styles = StyleSheet.create({
     bold: {
         fontWeight: '600',
     },
-
     // Description
     descLabel: {
         fontSize: 15,
