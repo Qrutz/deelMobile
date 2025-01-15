@@ -1,10 +1,15 @@
-// ProductBottomCard.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    Image,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-
-interface BottomCardProps {
+interface ProductBottomCardProps {
     title: string;
     distance: number;
     condition: string;
@@ -13,6 +18,12 @@ interface BottomCardProps {
     description: string;
     isListingOwner: boolean;
     onPressMakeOffer: () => void;
+
+    // NEW: Seller info
+    sellerName?: string;
+    sellerRating?: number;        // optional rating, e.g., 4.9
+    sellerProfileImg?: string;    // a URL to their avatar
+    onPressChat?: () => void;     // tap chat bubble
 }
 
 export default function ProductBottomCard({
@@ -24,158 +35,208 @@ export default function ProductBottomCard({
     description,
     isListingOwner,
     onPressMakeOffer,
-}: BottomCardProps) {
+
+    sellerName = 'Design house',
+    sellerRating = 4.9,
+    sellerProfileImg,
+    onPressChat,
+}: ProductBottomCardProps) {
+
     const distanceLabel = distance ? `${distance.toFixed(1)} km away` : '';
     const conditionLabel = condition || 'Unknown';
     const valueLabel = approximateValue ? `$${approximateValue.toFixed(0)}` : 'N/A';
 
     return (
         <View style={styles.bottomCard}>
-            <View style={styles.dragIndicator} />
 
-            <View style={styles.titleRow}>
-                <Text style={styles.titleText}>{title}</Text>
-                {!!distanceLabel && <Text style={styles.distanceText}>{distanceLabel}</Text>}
-            </View>
+            {/* Scrollable content (for item info) */}
+            <ScrollView
+                style={styles.scrollArea}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {/* (Optional) Drag handle */}
+                <View style={styles.handleBar} />
 
-            {/* Attributes row */}
-            <View style={styles.attributesRow}>
+                {/* ------ SELLER ROW SECTION ------ */}
+                <View style={styles.sellerRow}>
+                    <View style={styles.sellerLeft}>
+                        {/* Seller avatar (if provided) */}
+                        <Image
+                            source={sellerProfileImg
+                                ? { uri: sellerProfileImg }
+                                : require('../../../assets/images/favicon.png') // fallback
+                            }
+                            style={styles.sellerAvatar}
+                        />
+                        <View style={{ marginLeft: 8, flexDirection: 'column', gap: 6 }}>
+                            <Text style={styles.sellerName}>{sellerName}</Text>
+                            {/* rating or anything else */}
+
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+
+                                <Ionicons name="star" size={17} color="#ff1493" />
+
+                                <Text style={styles.sellerRating}>
+                                    {sellerRating.toFixed(1)}
+                                </Text>
+
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Chat bubble on the right */}
+                    <View style={styles.sellerRight}>
+                        <TouchableOpacity
+                            style={styles.chatBubble}
+                            onPress={onPressChat}
+                        >
+                            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                {/* ------ /SELLER ROW SECTION ------ */}
+
+                {/* Title & distance row */}
+                <View style={styles.titleRow}>
+                    <Text style={styles.titleText} numberOfLines={1}>
+                        {title}
+                    </Text>
+                    {!!distanceLabel && (
+                        <Text style={styles.distanceText}>{distanceLabel}</Text>
+                    )}
+                </View>
+
+                {/* Condition / Value / Swap Prefs */}
                 <Text style={styles.attribute}>
-                    Condition: <Text style={{ fontWeight: '600' }}>{conditionLabel}</Text>
+                    Condition: <Text style={styles.bold}>{conditionLabel}</Text>
                 </Text>
                 <Text style={styles.attribute}>
-                    Value: <Text style={{ fontWeight: '600' }}>{valueLabel}</Text>
+                    Value: <Text style={styles.bold}>{valueLabel}</Text>
                 </Text>
-            </View>
+                <Text style={styles.attribute}>
+                    Looking for: <Text style={styles.bold}>{swapPrefs}</Text>
+                </Text>
 
-            <Text style={styles.attribute}>
-                Looking for: <Text style={{ fontWeight: '600' }}>{swapPrefs}</Text>
-            </Text>
+                {/* Description */}
+                <Text style={styles.descLabel}>Description</Text>
+                <Text style={styles.descText}>{description}</Text>
+            </ScrollView>
 
-            <Text style={styles.descriptionLabel}>Description</Text>
-            <Text style={styles.description}>{description}</Text>
-
-            {/* CTA */}
-            {isListingOwner ? (
-                <View style={styles.ownerActions}>
-                    <TouchableOpacity style={styles.editButton}>
-                        <Text style={styles.editButtonText}>Edit Listing</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.deleteButton}>
-                        <Text style={styles.deleteButtonText}>Delete</Text>
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                <View style={styles.buyerActions}>
-                    <TouchableOpacity style={styles.offerButton} onPress={onPressMakeOffer}>
-                        <Text style={styles.offerButtonText}>Make an Offer</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
         </View>
     );
 }
 
+/** ============== STYLES ============== **/
 const styles = StyleSheet.create({
     bottomCard: {
-        marginTop: -30, // overlap the image
         backgroundColor: '#fff',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        minHeight: SCREEN_HEIGHT * 0.55,
-        padding: 16,
-        // shadow for iOS/Android
+        position: 'relative',
+
+        // shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 6,
     },
-    dragIndicator: {
+
+    // Scroll container
+    scrollArea: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingTop: 12,
+    },
+    scrollContent: {
+        paddingBottom: 100, // extra space if CTA is pinned below
+    },
+
+    // Optional handle bar
+    handleBar: {
         alignSelf: 'center',
         width: 40,
         height: 4,
         borderRadius: 2,
         backgroundColor: '#ccc',
-        marginBottom: 8,
+        marginBottom: 12,
     },
+
+    // SELLER ROW
+    sellerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    sellerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    sellerAvatar: {
+        width: 42,
+        height: 42,
+        borderRadius: 20,
+        backgroundColor: '#eee',
+    },
+    sellerName: {
+        fontSize: 17,
+        fontWeight: '600',
+        color: '#333',
+    },
+    sellerRating: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#333',
+    },
+    sellerRight: {
+        // Possibly some extra margin or styling
+    },
+    chatBubble: {
+        backgroundColor: '#000',
+        borderRadius: 20,
+        padding: 8,
+        paddingHorizontal: 26,
+    },
+    // Title & distance
     titleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 6,
     },
     titleText: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#333',
-        maxWidth: '70%',
+        maxWidth: '65%',
     },
     distanceText: {
         fontSize: 14,
         color: '#666',
     },
-    attributesRow: {
-        flexDirection: 'row',
-        marginBottom: 6,
-    },
+
+    // Condition, Value, etc.
     attribute: {
-        marginRight: 15,
         fontSize: 14,
         color: '#444',
+        marginBottom: 4,
     },
-    descriptionLabel: {
+    bold: {
+        fontWeight: '600',
+    },
+
+    // Description
+    descLabel: {
         fontSize: 15,
         fontWeight: '600',
         color: '#333',
-        marginTop: 12,
+        marginTop: 8,
         marginBottom: 4,
     },
-    description: {
+    descText: {
         fontSize: 14,
-        color: '#555',
         lineHeight: 20,
-    },
-
-    ownerActions: {
-        flexDirection: 'row',
-        marginTop: 16,
-    },
-    editButton: {
-        flex: 1,
-        backgroundColor: '#FFD54F',
-        paddingVertical: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginRight: 8,
-    },
-    editButtonText: {
-        color: '#333',
-        fontWeight: '600',
-    },
-    deleteButton: {
-        flex: 1,
-        backgroundColor: '#E57373',
-        paddingVertical: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    deleteButtonText: {
-        color: '#fff',
-        fontWeight: '600',
-    },
-    buyerActions: {
-        marginTop: 16,
-    },
-    offerButton: {
-        backgroundColor: '#E91E63',
-        paddingVertical: 14,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    offerButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '700',
+        color: '#555',
     },
 });
