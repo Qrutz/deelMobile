@@ -2,7 +2,7 @@ import NavBar from '@/components/Product/V2/NavBar';
 import ProductBottomCard from '@/components/Product/V2/ProductBottomCard';
 import ProductImageCarousel from '@/components/Product/V2/ProductImageSection';
 import { useFetchListing } from '@/hooks/ListingHooks/useFetchListing';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import {
     View,
@@ -60,16 +60,16 @@ export default function ProductPage() {
 
     return (
         <View style={styles.container}>
+
             {/* 1) Overlaid NavBar */}
             <NavBar
-                onBack={() => console.log('Back')}
+                onBack={() => router.back()}
                 onBookmark={() => console.log('Bookmark')}
                 onShare={() => console.log('Share')}
             />
 
             {/* 2) Hero image carousel at top */}
             <View style={styles.heroContainer}>
-
                 <ProductImageCarousel images={images} />
             </View>
 
@@ -97,7 +97,9 @@ export default function ProductPage() {
                 <View style={[styles.pinnedCTA, { zIndex: 99 }]}>
                     <TouchableOpacity
                         style={styles.ctaButton}
-                        onPress={() => console.log('Make an Offer!')}
+                        onPress={() => {
+                            router.push({ pathname: '/proposeTradeModal', params: { listingId: listing.id, recipientId: listing.userId } });
+                        }}
                     >
                         <Text style={styles.ctaText}>Make an Offer</Text>
                     </TouchableOpacity>
