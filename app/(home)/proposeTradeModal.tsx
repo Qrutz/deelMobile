@@ -1,51 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
+    ScrollView,
+    Alert,
     TextInput,
-    FlatList,
-    ActivityIndicator,
-    SafeAreaView,
+    TouchableOpacity,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFetchUserListings } from '@/hooks/ListingHooks/useFetchMyListings';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 
-/** Example shape for an item the user can offer in a swap */
-interface UserItem {
-    id: string | number;
-    title: string;
-    // maybe an image, quantity, etc.
-}
+import { useFetchListing } from '@/hooks/ListingHooks/useFetchListing';
+import { useFetchUserListings } from '@/hooks/ListingHooks/useFetchMyListings';
 
-export default function SwapModal() {
-    // 1) Retrieve the listing or other relevant info from route params
-    // e.g., /swap-modal?listingId=123
+import { Listing } from '@/types';
+import DealHeader from '@/components/ProposeDeal/DealHeader';
+import ExchangeRow from '@/components/ProposeDeal/ExchangeRow';
+import PartialCashInput from '@/components/ProposeDeal/PartialCashInput';
+import DealNoteInput from '@/components/ProposeDeal/DealNoteInput';
+import ConfirmButton from '@/components/ProposeDeal/ConfirmButton';
+import SingleItemSelectorModal from '@/components/ProposeDeal/SingleItemSelectorModal';
+import PickupDateInput from '@/components/ProposeDeal/PickupDateInput';
+
+export default function DealBuilderScreen() {
     const { listingId, recipientId } = useLocalSearchParams();
     const router = useRouter();
+    const { getToken } = useAuth();
 
-    const { data: userItems, isLoading } = useFetchUserListings();
-    const { getToken } = useAuth(); // to get Clerk token
+    // 1) Fetch target listing
+    const { data: targetListing, isLoading: loadingTarget } = useFetchListing(listingId as string);
 
-    const [selectedItems, setSelectedItems] = useState<UserItem[]>([]);
+    // 2) Fetch user’s items
+    const { data: userItems, isLoading: loadingUserItems } = useFetchUserListings();
+
+    // Local state
+    const [selectedItem, setSelectedItem] = useState<Listing | null>(null);
+    const [partialCash, setPartialCash] = useState('');
     const [note, setNote] = useState('');
+    const [showItemModal, setShowItemModal] = useState(false);
+    const [pickupDate, setPickupDate] = useState<Date | null>(null); // new date state
 
-    // 3) Call the backend in handleSendSwap
-    const handleSendSwap = async () => {
+
+    // Single item selection
+    const handleSelectItem = (item: Listing) => {
+        setSelectedItem(item);
+        setShowItemModal(false);
+    };
+
+    // Confirm the deal
+    const handleSendDeal = async () => {
         if (!listingId || !recipientId) {
-            alert('Missing listingId or recipientId.');
+            Alert.alert('Error', 'Missing listingId or recipientId.');
             return;
         }
-        if (selectedItems.length === 0) {
-            alert('Please select at least one item to offer.');
+        const hasItem = !!selectedItem;
+        const hasCash = partialCash && Number(partialCash) > 0;
+        if (!hasItem && !hasCash) {
+            Alert.alert('Error', 'Select an item or add partial cash.');
             return;
         }
-
-        const listingAId = selectedItems[0].id; // or handle multiple if your API supports it
-        const listingBId = Number(listingId);   // if your param is a string, convert to number
 
         try {
             const token = await getToken();
@@ -56,181 +72,164 @@ export default function SwapModal() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    listingAId,
-                    listingBId,
-                    recipientId, // must match listingB's owner
+                    listingAId: selectedItem?.id,
+                    listingBId: Number(listingId),
+                    recipientId,
+                    partialCash: Number(partialCash) || 0,
+                    pickupTime: pickupDate,
+                    note,
                 }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                alert(`Swap failed: ${errorData?.error || 'Unknown error'}`);
+                Alert.alert('Deal failed', errorData?.error || 'Unknown error');
                 return;
             }
-
-            // If successful
-            const swapResult = await response.json();
-            console.log('Swap created:', swapResult);
-            alert('Swap proposed successfully!');
-
-            // router.push({
-            //     pathname: '/chat/[id]',
-            //     params: { id: response.chatId },
-            // });
+            Alert.alert('Success', 'Your deal has been proposed!');
             router.back();
-
         } catch (error) {
-            console.error('Error proposing swap:', error);
-            alert('Failed to propose swap. Please try again later.');
+            console.error('Error proposing deal:', error);
+            Alert.alert('Failed to propose. Please try again later.');
         }
     };
 
-
-    // 6) If still loading user’s items
-    if (isLoading) {
+    // Loading states
+    if (loadingTarget || loadingUserItems) {
         return (
             <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#E91E63" />
-                <Text>Loading your items...</Text>
+                <Text>Loading listing & your items...</Text>
+            </View>
+        );
+    }
+
+    if (!targetListing) {
+        return (
+            <View style={styles.centered}>
+                <Text>Could not find the listing you’re aiming for.</Text>
             </View>
         );
     }
 
     return (
-        <SafeAreaView style={styles.modalContainer}>
-            {/* Header row */}
-            <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Propose a Swap</Text>
-                <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-                    <Ionicons name="close" size={24} color="#333" />
-                </TouchableOpacity>
-            </View>
+        <SafeAreaView style={styles.safeArea} >
+            {/* Possibly a translucent status bar at the top */}
+            < ScrollView contentContainerStyle={styles.scrollContent} >
+                {/* Top header */}
+                < DealHeader title="Propose a deal" onClose={() => router.back()} />
 
-            {/* Instructional text */}
-            <Text style={styles.description}>
-                You’re proposing a swap for listing #{listingId}. Select items you want to offer.
-            </Text>
+                {/* 1) A "deal card" container to hold the items, partial cash, and note */}
+                <View style={styles.dealContainer}>
+                    {/* Exchange Row (the big images) */}
+                    <ExchangeRow
+                        selectedItem={selectedItem}
+                        targetListing={targetListing}
+                        setSelectedItem={setSelectedItem}
+                        onPressChangeItem={() => setShowItemModal(true)}
+                    />
 
-            {/* List of user’s items */}
-            <FlatList
-                data={userItems}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ paddingVertical: 8 }}
-                renderItem={({ item }) => {
-                    const isSelected = selectedItems.some((it) => it.id === item.id);
-                    return (
-                        <TouchableOpacity
-                            style={[styles.itemRow, isSelected && styles.itemRowSelected]}
-                            onPress={() => {
-                                setSelectedItems((prev) =>
-                                    isSelected
-                                        ? prev.filter((it) => it.id !== item.id)
-                                        : [...prev, item],
-                                );
-                            }}
-                        >
-                            <Text style={[styles.itemTitle, isSelected && styles.itemTitleSelected]}>
-                                {item.title}
-                            </Text>
-                            {isSelected && <Ionicons name="checkmark" size={20} color="#fff" />}
-                        </TouchableOpacity>
-                    );
-                }}
+
+
+                    {/* Partial Cash + Note in the same "deal" container */}
+                    <PartialCashInput partialCash={partialCash} onChangeCash={setPartialCash} />
+                    {/* A line or divider if you want */}
+
+                </View>
+                <View style={styles.divider} />
+
+
+
+                {/* 3) Pickup Date Input (NEW) */}
+                <PickupDateInput pickupDate={pickupDate} onChangeDate={setPickupDate} />
+
+
+                <DealNoteInput note={note} onChangeNote={setNote} />
+
+
+                {/* Confirm Button */}
+
+
+
+            </ScrollView >
+            <ConfirmButton label="Confirm Exchange" onPress={handleSendDeal}>
+                {/* You could place a custom icon here if you want */}
+            </ConfirmButton>
+
+
+            {/* Single item selection modal */}
+            < SingleItemSelectorModal
+                visible={showItemModal}
+                userItems={userItems || []}
+                selectedItem={selectedItem}
+                onSelectItem={handleSelectItem}
+                onClose={() => setShowItemModal(false)}
             />
-
-            {/* Optional text note */}
-            <Text style={styles.noteLabel}>Add a note (optional)</Text>
-            <TextInput
-                style={styles.noteInput}
-                value={note}
-                onChangeText={setNote}
-                placeholder="e.g. 'Let's trade soon!'"
-                multiline
-            />
-
-            {/* Submit Button */}
-            <TouchableOpacity style={styles.sendButton} onPress={handleSendSwap}>
-                <Text style={styles.sendButtonText}>Send Swap Request</Text>
-            </TouchableOpacity>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }
 
-/* -------------- STYLES -------------- */
+/* ------------------- STYLES ------------------- */
+
+
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+    scrollContent: {
+        paddingHorizontal: 16,
+        paddingBottom: 40,
+    },
+    dealContainer: {
+        borderRadius: 12,
+
+
+        marginTop: 12,
+        // optional shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#ddd',
+        marginVertical: 12,
+    },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    modalContainer: {
-        flex: 1,
-        paddingTop: 50,
-        paddingHorizontal: 16,
-        backgroundColor: '#fff',
-    },
-    headerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    pickupContainer: {
+        marginTop: 12,
         marginBottom: 12,
     },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        textAlign: 'center',
-        flex: 1,
-        color: '#333',
-    },
-    closeButton: {
-        padding: 6,
-    },
-    description: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 16,
-    },
-    itemRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#f9f9f9',
-        padding: 12,
-        marginBottom: 8,
-        borderRadius: 8,
-    },
-    itemRowSelected: {
-        backgroundColor: '#FF1493',
-    },
-    itemTitle: {
+    pickupLabel: {
         fontSize: 15,
-        color: '#333',
-    },
-    itemTitleSelected: {
-        color: '#fff',
         fontWeight: '600',
-    },
-    noteLabel: {
-        fontSize: 14,
         color: '#333',
-        marginTop: 16,
         marginBottom: 6,
     },
-    noteInput: {
-        backgroundColor: '#f9f9f9',
-        borderRadius: 8,
-        padding: 10,
-        minHeight: 60,
-        textAlignVertical: 'top',
-        marginBottom: 16,
-    },
-    sendButton: {
-        backgroundColor: '#E91E63',
-        borderRadius: 8,
-        paddingVertical: 14,
+    pickupRow: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
-    sendButtonText: {
-        color: '#fff',
-        fontWeight: '600',
+    pickupInput: {
+        flex: 1,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginRight: 8,
+        color: '#333',
+    },
+    calendarButton: {
+        backgroundColor: '#9C27B0',
+        borderRadius: 8,
+        padding: 10,
     },
 });

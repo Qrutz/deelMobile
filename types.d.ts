@@ -1,3 +1,5 @@
+import { TransactionType } from './app/(home)/modaltest';
+
 // Define the User type
 export interface User {
   id: string;
@@ -16,7 +18,7 @@ export interface Listing {
   id: number;
   title: string;
   description: string;
-  price: number;
+  price?: number;
   category: string;
   latitude: number;
   longitude: number;
@@ -25,6 +27,9 @@ export interface Listing {
   userId: string; // Clerk user ID
   user: User; // Nested user object
   isOwner?: boolean;
+  swapPreferences?: string;
+  locationName?: string;
+  condition?: string;
 }
 
 interface Swap {

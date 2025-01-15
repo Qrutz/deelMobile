@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 
-// Example interface if your listings have "ImageUrl" and "title"
 interface Listing {
     id: number;
     title: string;
@@ -11,87 +11,122 @@ interface Listing {
 interface SwapProposalBubbleProps {
     listingA?: Listing;
     listingB?: Listing;
-    status?: string;              // "pending", "accepted", etc.
-    pickupDate?: string;          // If you eventually store a real date
-    isOutgoing?: boolean;         // <-- Add this prop to know if current user is the proposer
-    onAcceptSwap?: () => void;    // Called when user taps "Accept"
-    onDeclineSwap?: () => void;   // Called when user taps "Decline"
+    status?: string;               // "pending", "accepted", "declined", etc.
+    partialCash?: number;          // e.g. 50
+    pickupDate?: string;           // e.g. "Tomorrow @ 3:00PM"
+    note?: string;                 // e.g. "I'll add 50 kr because..."
+    isOutgoing?: boolean;          // true if current user is the proposer
+    onAcceptSwap?: () => void;     // Called on "Accept"
+    onDeclineSwap?: () => void;    // Called on "Decline"
 }
 
 export default function SwapProposalBubble({
     listingA,
     listingB,
     status = 'pending',
-    pickupDate, // optional prop if you want a real date
-    isOutgoing = false, // defaults to false
+    partialCash,
+    pickupDate,
+    note,
+    isOutgoing = false,
     onAcceptSwap,
     onDeclineSwap,
 }: SwapProposalBubbleProps) {
 
-    // Hardcode a date/time if you don't pass `pickupDate`
+    // Fall back if no pickupDate
     const displayDate = pickupDate || 'Pickup: Tomorrow @ 3:00PM';
 
-    // Decide if we should show Accept/Decline or "Waiting for response"
-    const showActions = status === 'pending' && !isOutgoing;
-    const showWaiting = status === 'pending' && isOutgoing;
+    // Optional partial cash label
+    const cashLabel = partialCash && partialCash > 0 ? `+ ${partialCash} kr` : null;
+
+    // Show Accept/Decline if I'm the recipient and status == pending
+    const showActions = (status === 'pending') && !isOutgoing;
+    // Show "Waiting" if I'm the proposer and status == pending
+    const showWaiting = (status === 'pending') && isOutgoing;
+
+    function renderNote() {
+        if (!note) return null;
+        return <Text style={styles.noteText}>Note: {note}</Text>;
+    }
+
+    // Dynamically choose bubble background based on status
+    let containerStyle: any[] = [styles.container];
+    switch (status) {
+        case 'accepted':
+            containerStyle.push({ backgroundColor: '#A5D6A7' }); // light green pastel
+            break;
+        case 'declined':
+            containerStyle.push({ backgroundColor: '#EF9A9A' }); // light red pastel
+            break;
+        case 'pending':
+        default:
+            containerStyle.push({ backgroundColor: '#FFF8E1' }); // warm pastel yellow
+            break;
+    }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.swapHeading}>Swap Proposal</Text>
+        <View style={containerStyle}>
+            {/* Heading */}
+            <Text style={styles.heading}>DEAL PROPOSAL</Text>
 
-            <View style={styles.listingsRow}>
+            {/* The row that shows listing A vs listing B */}
+            <View style={styles.row}>
                 {/* Listing A */}
-                <View style={styles.listingColumn}>
+                <View style={styles.column}>
                     <Text style={styles.listingTitle}>{listingA?.title || 'Listing A'}</Text>
                     {listingA?.ImageUrl ? (
-                        <Image source={{ uri: listingA.ImageUrl }} style={styles.listingImage} />
+                        <Image source={{ uri: listingA.ImageUrl }} style={styles.image} />
                     ) : (
-                        <View style={styles.placeholderBox}>
+                        <View style={styles.placeholder}>
                             <Text style={styles.placeholderText}>No Image</Text>
                         </View>
                     )}
                 </View>
 
-                <Text style={styles.swapSymbol}>↔</Text>
+                {/* Middle area: arrows, partialCash, etc. */}
+                <View style={styles.middleArea}>
+                    <Text style={styles.swapSymbol}>↔</Text>
+                    {cashLabel && <Text style={styles.cashLabel}>{cashLabel}</Text>}
+                </View>
 
                 {/* Listing B */}
-                <View style={styles.listingColumn}>
+                <View style={styles.column}>
                     <Text style={styles.listingTitle}>{listingB?.title || 'Listing B'}</Text>
                     {listingB?.ImageUrl ? (
-                        <Image source={{ uri: listingB.ImageUrl }} style={styles.listingImage} />
+                        <Image source={{ uri: listingB.ImageUrl }} style={styles.image} />
                     ) : (
-                        <View style={styles.placeholderBox}>
+                        <View style={styles.placeholder}>
                             <Text style={styles.placeholderText}>No Image</Text>
                         </View>
                     )}
                 </View>
             </View>
 
-            {/* Hardcoded pickup date or pass it in as a prop */}
+            {/* Optional note from the proposer */}
+            {renderNote()}
+
+            {/* Pickup date/time */}
             <Text style={styles.pickupDate}>{displayDate}</Text>
 
-            {/* Show the current status */}
-            <Text style={styles.statusText}>Status: {status}</Text>
+            {/* Status text */}
+            <Text style={styles.status}>Status: {status}</Text>
 
-            {/* If “pending” and user is the recipient => show Accept/Decline */}
+            {/* Accept/Decline or waiting message */}
             {showActions && (
-                <View style={styles.buttonRow}>
+                <View style={styles.buttonsRow}>
                     {onAcceptSwap && (
-                        <TouchableOpacity style={[styles.swapButton, styles.accept]} onPress={onAcceptSwap}>
+                        <TouchableOpacity style={[styles.button, styles.acceptBtn]} onPress={onAcceptSwap}>
                             <Text style={styles.buttonText}>Accept</Text>
                         </TouchableOpacity>
                     )}
                     {onDeclineSwap && (
-                        <TouchableOpacity style={[styles.swapButton, styles.decline]} onPress={onDeclineSwap}>
+                        <TouchableOpacity style={[styles.button, styles.declineBtn]} onPress={onDeclineSwap}>
                             <Text style={styles.buttonText}>Decline</Text>
                         </TouchableOpacity>
                     )}
                 </View>
             )}
-
-            {/* If the current user is the proposer => “Waiting for response” */}
             {showWaiting && (
-                <View style={styles.waitingContainer}>
+                <View style={styles.waitingBox}>
                     <Text style={styles.waitingText}>Waiting for a response...</Text>
                 </View>
             )}
@@ -101,87 +136,121 @@ export default function SwapProposalBubble({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#FFF9E6', // pale yellow or any accent color
-        borderRadius: 8,
-        padding: 10,
-        maxWidth: 260, // tweak as needed
+        borderRadius: 12,
+        padding: 12,
+        maxWidth: 280,
+
+        // small shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
     },
-    swapHeading: {
-        fontWeight: '700',
-        fontSize: 14,
-        marginBottom: 6,
+    heading: {
+        fontSize: 18,        // bigger
+        fontWeight: '900',   // extra bold
+        color: '#333',       // darker text
+        marginBottom: 10,
+        textAlign: 'center',
+        letterSpacing: 1,    // optional spacing for a bolder look
     },
-    listingsRow: {
+    row: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         marginBottom: 8,
     },
-    listingColumn: {
+    column: {
         alignItems: 'center',
+        width: 80, // match image size
     },
     listingTitle: {
-        fontWeight: '500',
-        fontSize: 14,
+        fontSize: 13,
+        fontWeight: '600',
         marginBottom: 4,
+        color: '#333',
+        textAlign: 'center',
     },
-    listingImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 6,
-        backgroundColor: '#f0f0f0',
+    image: {
+        width: 70,
+        height: 70,
+        borderRadius: 8,
+        backgroundColor: '#eee',
     },
-    placeholderBox: {
-        width: 80,
-        height: 80,
-        borderRadius: 6,
+    placeholder: {
+        width: 70,
+        height: 70,
+        borderRadius: 8,
         backgroundColor: '#ccc',
         justifyContent: 'center',
         alignItems: 'center',
     },
     placeholderText: {
-        color: '#666',
         fontSize: 12,
+        color: '#666',
+    },
+    middleArea: {
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     swapSymbol: {
-        fontSize: 18,
-        marginHorizontal: 10,
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#333',
+        marginBottom: 2,
+    },
+    cashLabel: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#333',
+        backgroundColor: '#FFECB3', // pale yellow for partial cash
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+        marginTop: 2,
+    },
+    noteText: {
+        fontStyle: 'italic',
+        fontSize: 13,
+        color: '#555',
+        marginBottom: 6,
     },
     pickupDate: {
         marginTop: 4,
         fontSize: 13,
         color: '#444',
     },
-    statusText: {
-        marginTop: 6,
-        fontStyle: 'italic',
+    status: {
         fontSize: 13,
+        fontStyle: 'italic',
         color: '#666',
+        marginTop: 4,
     },
-    buttonRow: {
+    buttonsRow: {
         flexDirection: 'row',
-        marginTop: 8,
+        marginTop: 10,
+        justifyContent: 'space-between',
     },
-    swapButton: {
+    button: {
         flex: 1,
         paddingVertical: 8,
-        borderRadius: 6,
+        borderRadius: 8,
         alignItems: 'center',
         marginHorizontal: 4,
     },
-    accept: {
+    acceptBtn: {
         backgroundColor: '#4CAF50',
     },
-    decline: {
-        backgroundColor: '#f44336',
+    declineBtn: {
+        backgroundColor: '#F44336',
     },
     buttonText: {
-        color: '#FFF',
+        color: '#fff',
         fontWeight: '600',
     },
-    waitingContainer: {
-        marginTop: 8,
-        paddingVertical: 8,
+    waitingBox: {
+        marginTop: 10,
         alignItems: 'center',
     },
     waitingText: {

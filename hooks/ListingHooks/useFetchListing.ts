@@ -17,7 +17,7 @@ const fetchListing = async (id: string, token: string) => {
   if (!response.ok) {
     throw new Error('Failed to fetch listing');
   }
-  return response.json();
+  return response.json() as Promise<Listing>;
 };
 
 // React Query Hook
@@ -28,7 +28,10 @@ export const useFetchListing = (id: string) => {
     queryKey: ['listing', id],
     queryFn: async () => {
       const token = await getToken(); // Fetch token dynamically
-      return fetchListing(id, token!);
+      if (!token) {
+        throw new Error('Authentication token missing');
+      }
+      return fetchListing(id, token);
     },
   });
 };

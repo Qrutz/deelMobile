@@ -15,6 +15,8 @@ interface MessageBubbleProps {
         listingA?: { id: number; title: string };
         listingB?: { id: number; title: string };
         status?: string; // "pending" | "accepted" etc.
+        partialCash?: number; // Optional partial cash offer
+        note?: string;
         // You could add more fields if needed
     };
 
@@ -88,6 +90,9 @@ export default function MessageBubble({
                                     onAcceptSwap={onAcceptSwap}
                                     onDeclineSwap={onDeclineSwap}
                                     isOutgoing={isOutgoing}
+                                    note={swapData.note}
+                                    partialCash={swapData.partialCash}
+
                                 />
 
                             ) : (
