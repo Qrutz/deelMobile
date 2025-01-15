@@ -27,8 +27,9 @@ export interface Listing {
   userId: string; // Clerk user ID
   user: User; // Nested user object
   isOwner?: boolean;
-  transactionType: TransactionType;
   swapPreferences?: string;
+  locationName?: string;
+  condition?: string;
 }
 
 interface Swap {

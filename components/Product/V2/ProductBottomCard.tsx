@@ -19,7 +19,7 @@ interface ProductBottomCardProps {
 
     sellerName?: string;
     sellerRating?: number;
-    sellerProfileImg?: string;
+    sellerProfileImg: string;
     onPressChat?: () => void;
     location?: string;
 }
@@ -56,11 +56,7 @@ export default function ProductBottomCard({
                 <View style={styles.sellerRow}>
                     <View style={styles.sellerLeft}>
                         <Image
-                            source={
-                                sellerProfileImg
-                                    ? { uri: sellerProfileImg }
-                                    : null
-                            }
+                            source={{ uri: sellerProfileImg }}
                             style={styles.sellerAvatar}
                         />
                         <View style={{ marginLeft: 8 }}>
@@ -77,7 +73,7 @@ export default function ProductBottomCard({
                     {/* Chat bubble on the right */}
                     <View style={styles.sellerRight}>
                         <View style={styles.chatBubble}>
-                            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
+                            <Ionicons name="chatbubble-ellipses-outline" size={25} color="#fff" />
                         </View>
                     </View>
                 </View>
@@ -95,7 +91,7 @@ export default function ProductBottomCard({
                             <Ionicons
                                 name="location-outline"
                                 size={16}
-                                color="#666"
+                                color="#b100c9"
                                 style={{ marginRight: 4 }}
                             />
                             <Text style={styles.distanceText}>{distanceLabel}</Text>
@@ -206,7 +202,7 @@ const styles = StyleSheet.create({
     chatBubble: {
         backgroundColor: '#000',
         borderRadius: 40,
-        padding: 8,
+        padding: 6,
         paddingHorizontal: 25,
     },
 

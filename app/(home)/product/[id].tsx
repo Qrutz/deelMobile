@@ -1,6 +1,8 @@
 import NavBar from '@/components/Product/V2/NavBar';
 import ProductBottomCard from '@/components/Product/V2/ProductBottomCard';
 import ProductImageCarousel from '@/components/Product/V2/ProductImageSection';
+import { useFetchListing } from '@/hooks/ListingHooks/useFetchListing';
+import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import {
     View,
@@ -27,6 +29,35 @@ const mockListing = {
 };
 
 export default function ProductPage() {
+    const { id } = useLocalSearchParams() as { id: string };
+
+    const { data: listing, isLoading, isError } = useFetchListing(id);
+
+    if (isLoading || !listing) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Loading...</Text>
+            </View>
+        );
+    }
+
+    if (isError) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Error fetching listing</Text>
+            </View>
+        );
+    }
+
+    console.log('Listing:', listing);
+
+    const images = [
+        listing.ImageUrl,
+        'https://i.blocketcdn.se/pictures/recommerce/1207165686/0e954736-6fad-495e-ac80-e51aa78448e2.jpg?type=mob_iphone_li_large_retina',
+        'https://i.blocketcdn.se/pictures/recommerce/1208702560/67abd2f1-3dc3-411f-b903-124ce667541c.jpg?type=mob_iphone_li_large_retina',
+
+    ];
+
     return (
         <View style={styles.container}>
             {/* 1) Overlaid NavBar */}
@@ -38,22 +69,25 @@ export default function ProductPage() {
 
             {/* 2) Hero image carousel at top */}
             <View style={styles.heroContainer}>
-                <ProductImageCarousel images={mockListing.images} />
+
+                <ProductImageCarousel images={images} />
             </View>
 
             {/* 3) The bottom card that overlaps the hero by -30 */}
             <View style={styles.bottomCardContainer}>
+
                 <ProductBottomCard
-                    title={mockListing.title}
+                    title={listing.title}
                     distance={mockListing.distance}
-                    condition={mockListing.condition}
-                    approximateValue={mockListing.approximateValue}
-                    swapPrefs={mockListing.swapPrefs}
-                    description={mockListing.description}
-                    isListingOwner={mockListing.isListingOwner}
-                    sellerName="Design house"
-                    sellerRating={4.9}
-                    sellerProfileImg="https://example.com/sellerAvatar.jpg"
+                    condition={listing.condition || 'Unknown'}
+                    approximateValue={listing.price || 0}
+                    swapPrefs={listing.swapPreferences || 'Open to anything...'}
+                    description={listing.description}
+                    location={listing.locationName || 'Unknown'}
+                    isListingOwner={listing.isOwner || false}
+                    sellerName={listing.user.fullName || 'No name'}
+                    sellerRating={5.0}
+                    sellerProfileImg={listing.user.image || ''}
                     onPressChat={() => console.log('Chat pressed')}
                 />
             </View>
@@ -102,7 +136,7 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     ctaButton: {
-        backgroundColor: '#ff1493',
+        backgroundColor: '#b100c9',
         borderRadius: 8,
         paddingVertical: 18,
         alignItems: 'center',
