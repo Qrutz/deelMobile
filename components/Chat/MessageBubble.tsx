@@ -12,6 +12,7 @@ interface MessageBubbleProps {
 
     // Add this prop for swap proposals
     swapData?: {
+        id: string;
         listingA?: { id: number; title: string };
         listingB?: { id: number; title: string };
         status?: string; // "pending" | "accepted" etc.
@@ -85,6 +86,7 @@ export default function MessageBubble({
                         ) : /* 3) Swap Proposal */
                             type === 'swapProposal' && swapData ? (
                                 <SwapProposalBubble
+                                    id={swapData.id}
                                     listingA={swapData.listingA}
                                     listingB={swapData.listingB}
                                     status={swapData.status}

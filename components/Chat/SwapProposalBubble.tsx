@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import dayjs from 'dayjs';
+import { router } from 'expo-router';
 
 interface Listing {
     id: number;
@@ -10,6 +11,7 @@ interface Listing {
 }
 
 interface SwapProposalBubbleProps {
+    id: string;
     listingA?: Listing;
     listingB?: Listing;
     status?: string;           // "pending", "accepted", "declined", etc.
@@ -22,6 +24,7 @@ interface SwapProposalBubbleProps {
 }
 
 export default function SwapProposalBubble({
+    id,
     listingA,
     listingB,
     status = 'pending',
@@ -72,81 +75,85 @@ export default function SwapProposalBubble({
     }
 
     return (
-        <View style={containerStyle}>
-            {/* Title Row (Swap Offer) */}
-            {/* <Text style={styles.offerTitle}>Swap Offer</Text> */}
+        <TouchableOpacity activeOpacity={0.8} onPress={
+            () => router.push(`/deal/${id}`)
+        }>
+            <View style={containerStyle}>
+                {/* Title Row (Swap Offer) */}
+                {/* <Text style={styles.offerTitle}>Swap Offer</Text> */}
 
-            {/* Items Row */}
-            <View style={styles.itemsRow}>
-                {/* Left Item (Listing A) */}
-                <View style={styles.itemColumn}>
-                    <Text style={styles.itemTitle}>{listingA?.title || 'Item A'}</Text>
-                    {listingA?.ImageUrl ? (
-                        <Image source={{ uri: listingA.ImageUrl }} style={styles.itemImage} />
-                    ) : (
-                        <View style={styles.itemPlaceholder}>
-                            <Text style={styles.placeholderText}>No Image</Text>
-                        </View>
-                    )}
+                {/* Items Row */}
+                <View style={styles.itemsRow}>
+                    {/* Left Item (Listing A) */}
+                    <View style={styles.itemColumn}>
+                        <Text style={styles.itemTitle}>{listingA?.title || 'Item A'}</Text>
+                        {listingA?.ImageUrl ? (
+                            <Image source={{ uri: listingA.ImageUrl }} style={styles.itemImage} />
+                        ) : (
+                            <View style={styles.itemPlaceholder}>
+                                <Text style={styles.placeholderText}>No Image</Text>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Middle area: ↔ and optional partial cash */}
+                    <View style={styles.middleContainer}>
+                        <Text style={styles.swapIcon}>↔</Text>
+                        {cashLabel && (
+                            <Text style={styles.cashLabel}>{cashLabel}</Text>
+                        )}
+                    </View>
+
+                    {/* Right Item (Listing B) */}
+                    <View style={styles.itemColumn}>
+                        <Text style={styles.itemTitle}>{listingB?.title || 'Item B'}</Text>
+                        {listingB?.ImageUrl ? (
+                            <Image source={{ uri: listingB.ImageUrl }} style={styles.itemImage} />
+                        ) : (
+                            <View style={styles.itemPlaceholder}>
+                                <Text style={styles.placeholderText}>No Image</Text>
+                            </View>
+                        )}
+                    </View>
                 </View>
 
-                {/* Middle area: ↔ and optional partial cash */}
-                <View style={styles.middleContainer}>
-                    <Text style={styles.swapIcon}>↔</Text>
-                    {cashLabel && (
-                        <Text style={styles.cashLabel}>{cashLabel}</Text>
-                    )}
-                </View>
+                {/* Optional Note */}
+                {renderNote()}
 
-                {/* Right Item (Listing B) */}
-                <View style={styles.itemColumn}>
-                    <Text style={styles.itemTitle}>{listingB?.title || 'Item B'}</Text>
-                    {listingB?.ImageUrl ? (
-                        <Image source={{ uri: listingB.ImageUrl }} style={styles.itemImage} />
-                    ) : (
-                        <View style={styles.itemPlaceholder}>
-                            <Text style={styles.placeholderText}>No Image</Text>
-                        </View>
-                    )}
-                </View>
+                {/* Pickup Time */}
+                <Text style={styles.pickupLabel}>
+                    Pickup: <Text style={styles.pickupValue}>{displayDate}</Text>
+                </Text>
+
+                {/* Status */}
+                <Text style={[styles.statusLabel, { color: statusColor }]}>
+                    Status: {status}
+                </Text>
+
+                {/* If pending and I'm the recipient => Accept/Decline */}
+                {showActions && (
+                    <View style={styles.actionButtons}>
+                        {onAcceptSwap && (
+                            <TouchableOpacity style={[styles.actionButton, styles.acceptButton]} onPress={onAcceptSwap}>
+                                <Text style={styles.actionButtonText}>Accept</Text>
+                            </TouchableOpacity>
+                        )}
+                        {onDeclineSwap && (
+                            <TouchableOpacity style={[styles.actionButton, styles.declineButton]} onPress={onDeclineSwap}>
+                                <Text style={styles.actionButtonText}>Decline</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
+
+                {/* If I'm the proposer => Waiting for a response... */}
+                {showWaiting && (
+                    <View style={styles.waitingContainer}>
+                        <Text style={styles.waitingText}>Waiting for response...</Text>
+                    </View>
+                )}
             </View>
-
-            {/* Optional Note */}
-            {renderNote()}
-
-            {/* Pickup Time */}
-            <Text style={styles.pickupLabel}>
-                Pickup: <Text style={styles.pickupValue}>{displayDate}</Text>
-            </Text>
-
-            {/* Status */}
-            <Text style={[styles.statusLabel, { color: statusColor }]}>
-                Status: {status}
-            </Text>
-
-            {/* If pending and I'm the recipient => Accept/Decline */}
-            {showActions && (
-                <View style={styles.actionButtons}>
-                    {onAcceptSwap && (
-                        <TouchableOpacity style={[styles.actionButton, styles.acceptButton]} onPress={onAcceptSwap}>
-                            <Text style={styles.actionButtonText}>Accept</Text>
-                        </TouchableOpacity>
-                    )}
-                    {onDeclineSwap && (
-                        <TouchableOpacity style={[styles.actionButton, styles.declineButton]} onPress={onDeclineSwap}>
-                            <Text style={styles.actionButtonText}>Decline</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            )}
-
-            {/* If I'm the proposer => Waiting for a response... */}
-            {showWaiting && (
-                <View style={styles.waitingContainer}>
-                    <Text style={styles.waitingText}>Waiting for response...</Text>
-                </View>
-            )}
-        </View>
+        </TouchableOpacity>
     );
 }
 
