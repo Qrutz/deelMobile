@@ -17,6 +17,7 @@ interface MessageBubbleProps {
         status?: string; // "pending" | "accepted" etc.
         partialCash?: number; // Optional partial cash offer
         note?: string;
+        pickupTime?: Date;
         // You could add more fields if needed
     };
 
@@ -89,6 +90,7 @@ export default function MessageBubble({
                                     status={swapData.status}
                                     onAcceptSwap={onAcceptSwap}
                                     onDeclineSwap={onDeclineSwap}
+                                    pickupDate={swapData.pickupTime}
                                     isOutgoing={isOutgoing}
                                     note={swapData.note}
                                     partialCash={swapData.partialCash}

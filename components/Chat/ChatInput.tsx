@@ -1,5 +1,3 @@
-// ChatInputBar.tsx
-
 import React, { useState } from 'react';
 import {
     View,
@@ -35,19 +33,20 @@ export default function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
 
     return (
         <View style={styles.container}>
+            {/* GIF Modal */}
             <Modal
-                transparent // annoying that overlay also slides down with modal but fix later : TODO
+                transparent
                 visible={showGifPicker}
                 animationType="slide"
             >
                 <View style={styles.overlay}>
-                    {/* This is the clickable background to close the sheet */}
+                    {/* Clickable background to close the sheet */}
                     <TouchableOpacity
                         style={styles.overlayBackground}
                         onPress={() => setShowGifPicker(false)}
+                        activeOpacity={1}
                     />
-
-                    {/* Bottom sheet */}
+                    {/* Bottom sheet with the gif picker */}
                     <View style={styles.bottomSheet}>
                         <GifPicker
                             onSelectGif={handleSelectGif}
@@ -63,7 +62,7 @@ export default function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
                     onPress={() => setShowGifPicker(true)}
                     style={styles.gifButton}
                 >
-                    <Ionicons name="image" size={20} color="#333" />
+                    <Ionicons name="image" size={18} color="#666" />
                     <Text style={styles.gifButtonText}>GIF</Text>
                 </TouchableOpacity>
 
@@ -76,31 +75,40 @@ export default function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
                     value={messageText}
                     onChangeText={setMessageText}
                     placeholder="Type a message..."
-                    placeholderTextColor="#999"
+                    placeholderTextColor="#aaa"
                 />
 
                 {/* Send Button */}
                 <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-                    <Ionicons name="send" size={20} color="#fff" />
+                    <Ionicons name="send" size={18} color="#fff" />
                 </TouchableOpacity>
             </View>
-        </View >
+        </View>
     );
 }
 
-// ------- STYLES -----------
+// ------------------ Styles ------------------
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#FFD6EC',
+        backgroundColor: '#FFD6EC', // Pastel pink background (header zone)
         padding: 8,
+        borderTopWidth: 1,
+        borderTopColor: '#FFBDE0', // Slightly darker pink for border
     },
     inputRow: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#fff',
-        borderRadius: 20,
+        borderRadius: 24,
         paddingHorizontal: 12,
         paddingVertical: 8,
+
+        // Subtle shadow if desired:
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
     },
     gifButton: {
         flexDirection: 'row',
@@ -108,41 +116,37 @@ const styles = StyleSheet.create({
     },
     gifButtonText: {
         marginLeft: 4,
-        color: '#333',
+        color: '#666',
+        fontSize: 13,
     },
-    /* The small vertical line between the GIF button and the input */
     divider: {
         width: 1,
         height: '60%',
-        backgroundColor: '#ccc',
-        marginHorizontal: 12,
+        backgroundColor: '#EEE',
+        marginHorizontal: 10,
     },
     input: {
         flex: 1,
         color: '#333',
         fontSize: 15,
+        // remove default padding if desired
+        paddingVertical: 0,
     },
     sendButton: {
-        backgroundColor: '#E91E63',
+        backgroundColor: '#E91E63',  // Pink accent
         borderRadius: 20,
         padding: 8,
         marginLeft: 8,
     },
 
-    // Modal styles
-    gifPickerContainer: {
-        flex: 1,
-        marginTop: Platform.OS === 'android' ? 30 : 20,
-    },
+    // Modal / Overlay
     overlay: {
         flex: 1,
         justifyContent: 'flex-end',
     },
     overlayBackground: {
         flex: 1,
-        // If you want it basically invisible, do 'transparent'.
-        // If you want a slightly dark background, do low alpha:
-        backgroundColor: 'rgba(0,0,0,0.1)',
+        backgroundColor: 'rgba(0,0,0,0.1)', // Slight dim
     },
     bottomSheet: {
         backgroundColor: '#fff',

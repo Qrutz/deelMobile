@@ -114,8 +114,9 @@ const styles = StyleSheet.create({
         // Expand the pressable area to cover the entire image
     },
     productImage: {
-        width: 150,
-        height: 150,
+        width: 180,
+        height: 170,
+        aspectRatio: 1,
         borderRadius: 12,
         backgroundColor: '#eee',
     },

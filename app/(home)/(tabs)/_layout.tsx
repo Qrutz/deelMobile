@@ -2,6 +2,7 @@ import { router, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
 import React, { useRef } from 'react';
+import { Image } from 'react-native';
 
 export default function TabLayout() {
     // Animation for scaling effect
@@ -61,10 +62,13 @@ export default function TabLayout() {
                         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                             <TouchableOpacity
                                 style={styles.addButton}
-
                                 onPress={() => router.push('/(home)/modaltest')}
                             >
-                                <Ionicons name="add" size={30} color="white" />
+                                {/* Replace Ionicons 'add' with your local image */}
+                                <Image
+                                    source={require('../../../assets/images/Asset_6.png')}
+                                    style={styles.recyclingIcon}
+                                />
                             </TouchableOpacity>
                         </Animated.View>
                     ),
@@ -128,13 +132,21 @@ const styles = StyleSheet.create({
     },
     addButton: {
         backgroundColor: '#FF1493',        // Bright pink
-        width: 65,
-        height: 65,
-        borderRadius: 35,                  // Fully circular button
+        width: 59,
+        height: 55,
+        borderRadius: 16,                  // Fully circular button
         alignItems: 'center',
         justifyContent: 'center',
         boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)', // Web elevation
         elevation: 5,                      // Android elevation
-        marginBottom: 20,                  // Raise button above the bar
+        marginBottom: -8,                  // Raise button above the bar
+    },
+    recyclingIcon: {
+        width: 30,
+        height: 30,
+        // If you want it white, you can do tintColor if it's a monochrome asset:
+        tintColor: '#FFF',
+        // optional
+        resizeMode: 'contain',
     },
 });

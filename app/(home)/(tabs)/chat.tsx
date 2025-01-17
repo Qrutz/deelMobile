@@ -1,19 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import {
-    View,
-    FlatList,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator,
-    Alert,
-    Image,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { View, FlatList, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import socket from '@/utils/socket';
-import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
+import ChatItem from '@/components/Chat/ListView/ChatItem';
+
+
 
 interface Chat {
     id: string;
@@ -32,13 +25,13 @@ interface Chat {
     }>;
 }
 
-const ChatList = () => {
+export default function ChatListContainer() {
     const router = useRouter();
     const { user } = useUser();
 
     const [chats, setChats] = useState<Chat[]>([]);
     const [loading, setLoading] = useState(true);
-    const notificationListener = useRef<any>();
+    const notificationListener = useRef<any>(null);
 
     useEffect(() => {
         if (!user?.id) return;
@@ -54,23 +47,25 @@ const ChatList = () => {
 
         socket.on('notifyMessage', ({ chatId, content, senderName }) => {
             console.log('New message received:', { chatId, content });
+            setChats((prevChats) => {
+                const updated = [...prevChats];
+                const idx = updated.findIndex((c) => c.id === chatId);
 
-            setChats(prevChats => {
-                const updatedChats = [...prevChats];
-                const chatIndex = updatedChats.findIndex(c => c.id === chatId);
-
-                if (chatIndex !== -1) {
-                    // update the last message for existing chat
-                    updatedChats[chatIndex] = {
-                        ...updatedChats[chatIndex],
+                if (idx !== -1) {
+                    // update the chat's last message
+                    updated[idx] = {
+                        ...updated[idx],
                         messages: [
                             { content, createdAt: new Date().toISOString() },
-                            ...updatedChats[chatIndex].messages,
+                            ...updated[idx].messages,
                         ],
                     };
+                    // Move this chat to the top of the list
+                    const [movedChat] = updated.splice(idx, 1);
+                    updated.unshift(movedChat);
                 } else {
-                    // add a new chat if not found
-                    updatedChats.unshift({
+                    // new chat altogether
+                    updated.unshift({
                         id: chatId,
                         isGroup: false,
                         name: senderName,
@@ -78,7 +73,7 @@ const ChatList = () => {
                         messages: [{ content, createdAt: new Date().toISOString() }],
                     });
                 }
-                return updatedChats;
+                return updated;
             });
 
             // Local notification
@@ -113,86 +108,27 @@ const ChatList = () => {
         );
     }
 
-    const renderItem = ({ item }: { item: Chat }) => {
-        const isGroupChat = item.isGroup;
-        const otherMember = item.members.find(m => m.userId !== user?.id)?.user;
-
-        // Chat name: group name or the other user’s name
-        const chatName = isGroupChat
-            ? item.name || 'Unnamed Group'
-            : otherMember?.name || 'Unknown User';
-
-        // Last message & timestamp
-        const lastMessage = item.messages[0]?.content || 'No messages yet';
-        const timestamp = item.messages[0]?.createdAt || '';
-        const timeString = timestamp
-            ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : '';
-
-        // Decide the avatar:
-        // If group, show an Ionicon. If 1-on-1, show user’s profileImageUrl or a placeholder.
-        let avatarElement: React.ReactNode = null;
-        if (isGroupChat) {
-            avatarElement = (
-                <View style={[styles.avatar, styles.avatarGroup]}>
-                    <Ionicons name="people" size={20} color="#555" />
-                </View>
-            );
-        } else {
-            // private chat
-            if (otherMember?.profileImageUrl) {
-                avatarElement = (
-                    <Image
-                        source={{ uri: otherMember.profileImageUrl }}
-                        style={[styles.avatar, styles.avatarImage]}
-                    />
-                );
-            } else {
-                // fallback avatar
-                avatarElement = (
-                    <View style={[styles.avatar, styles.avatarFallback]}>
-                        <Ionicons name="person" size={22} color="#fff" />
-                    </View>
-                );
-            }
-        }
-
-        return (
-            <TouchableOpacity
-                style={styles.chatItem}
-                onPress={() => router.push(`/chat/${item.id}`)}
-                activeOpacity={0.7}
-            >
-                {/* Avatar */}
-                {avatarElement}
-
-                {/* Middle content: Name & Last Message */}
-                <View style={styles.chatContent}>
-                    <Text style={styles.chatName}>{chatName}</Text>
-                    <Text style={styles.chatLastMessage} numberOfLines={1}>
-                        {lastMessage}
-                    </Text>
-                </View>
-
-                {/* Timestamp on the right */}
-                <Text style={styles.chatTimestamp}>{timeString}</Text>
-            </TouchableOpacity>
-        );
+    const handleOpenChat = (chatId: string) => {
+        router.push(`/chat/${chatId}`);
     };
 
     return (
         <View style={styles.container}>
             <FlatList
                 data={chats}
-                keyExtractor={item => item.id}
-                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <ChatItem
+                        chat={item}
+                        currentUserId={user?.id}
+                        onPress={() => handleOpenChat(item.id)}
+                    />
+                )}
                 contentContainerStyle={{ paddingBottom: 8 }}
             />
         </View>
     );
-};
-
-export default ChatList;
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -212,52 +148,5 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: '#777',
-    },
-    chatItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 15,
-        borderBottomColor: '#F3F3F3',
-        borderBottomWidth: 1,
-    },
-    /* Avatar container variations */
-    avatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        marginRight: 12,
-    },
-    avatarGroup: {
-        backgroundColor: '#ffd4e5',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    avatarImage: {
-        resizeMode: 'cover',
-    },
-    avatarFallback: {
-        backgroundColor: '#ccc',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
-    chatContent: {
-        flex: 1, // so name/lastmessage occupies the middle
-    },
-    chatName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-    },
-    chatLastMessage: {
-        fontSize: 14,
-        color: '#777',
-        marginTop: 2,
-    },
-    chatTimestamp: {
-        fontSize: 12,
-        color: '#aaa',
-        marginLeft: 8,
     },
 });

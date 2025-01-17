@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
+import dayjs from 'dayjs';
 
 interface Listing {
     id: number;
@@ -11,13 +12,13 @@ interface Listing {
 interface SwapProposalBubbleProps {
     listingA?: Listing;
     listingB?: Listing;
-    status?: string;               // "pending", "accepted", "declined", etc.
-    partialCash?: number;          // e.g. 50
-    pickupDate?: string;           // e.g. "Tomorrow @ 3:00PM"
-    note?: string;                 // e.g. "I'll add 50 kr because..."
-    isOutgoing?: boolean;          // true if current user is the proposer
-    onAcceptSwap?: () => void;     // Called on "Accept"
-    onDeclineSwap?: () => void;    // Called on "Decline"
+    status?: string;           // "pending", "accepted", "declined", etc.
+    partialCash?: number;      // e.g. 50
+    pickupDate?: Date;         // e.g. new Date()
+    note?: string;             // "I'll add 50 kr..."
+    isOutgoing?: boolean;      // if current user is the proposer
+    onAcceptSwap?: () => void;
+    onDeclineSwap?: () => void;
 }
 
 export default function SwapProposalBubble({
@@ -32,157 +33,175 @@ export default function SwapProposalBubble({
     onDeclineSwap,
 }: SwapProposalBubbleProps) {
 
-    // Fall back if no pickupDate
-    const displayDate = pickupDate || 'Pickup: Tomorrow @ 3:00PM';
+    // Format pickup date/time if present:
+    const displayDate = pickupDate
+        ? dayjs(pickupDate).format('ddd, MMM D [at] h:mm A')
+        : 'No pickup time set';
 
-    // Optional partial cash label
+    // If partialCash is > 0, show something like "+ 50 kr"
     const cashLabel = partialCash && partialCash > 0 ? `+ ${partialCash} kr` : null;
 
-    // Show Accept/Decline if I'm the recipient and status == pending
+    // Decide if we show Accept/Decline or “Waiting…”
     const showActions = (status === 'pending') && !isOutgoing;
-    // Show "Waiting" if I'm the proposer and status == pending
     const showWaiting = (status === 'pending') && isOutgoing;
 
-    function renderNote() {
+    // If we have a user note
+    const renderNote = () => {
         if (!note) return null;
-        return <Text style={styles.noteText}>Note: {note}</Text>;
-    }
+        return <Text style={styles.noteText}>“{note}”</Text>;
+    };
 
-    // Dynamically choose bubble background based on status
+    // Container background color depends on status
     let containerStyle: any[] = [styles.container];
+    let statusColor = '#333'; // default text color for "Status:"
+
     switch (status) {
         case 'accepted':
-            containerStyle.push({ backgroundColor: '#A5D6A7' }); // light green pastel
+            containerStyle.push({ backgroundColor: '#C8E6C9' });  // soft green
+            statusColor = '#2E7D32'; // darker green for text
             break;
-        case 'declined':
-            containerStyle.push({ backgroundColor: '#EF9A9A' }); // light red pastel
+        case 'rejected':
+            containerStyle.push({ backgroundColor: '#FFCDD2' });  // soft red
+            statusColor = '#B71C1C'; // darker red
             break;
         case 'pending':
         default:
-            containerStyle.push({ backgroundColor: '#FFF8E1' }); // warm pastel yellow
+            containerStyle.push({ backgroundColor: '#FCE4EC' });  // soft pink
+            statusColor = '#333';
             break;
     }
 
     return (
         <View style={containerStyle}>
-            {/* Heading */}
-            <Text style={styles.heading}>DEAL PROPOSAL</Text>
+            {/* Title Row (Swap Offer) */}
+            {/* <Text style={styles.offerTitle}>Swap Offer</Text> */}
 
-            {/* The row that shows listing A vs listing B */}
-            <View style={styles.row}>
-                {/* Listing A */}
-                <View style={styles.column}>
-                    <Text style={styles.listingTitle}>{listingA?.title || 'Listing A'}</Text>
+            {/* Items Row */}
+            <View style={styles.itemsRow}>
+                {/* Left Item (Listing A) */}
+                <View style={styles.itemColumn}>
+                    <Text style={styles.itemTitle}>{listingA?.title || 'Item A'}</Text>
                     {listingA?.ImageUrl ? (
-                        <Image source={{ uri: listingA.ImageUrl }} style={styles.image} />
+                        <Image source={{ uri: listingA.ImageUrl }} style={styles.itemImage} />
                     ) : (
-                        <View style={styles.placeholder}>
+                        <View style={styles.itemPlaceholder}>
                             <Text style={styles.placeholderText}>No Image</Text>
                         </View>
                     )}
                 </View>
 
-                {/* Middle area: arrows, partialCash, etc. */}
-                <View style={styles.middleArea}>
-                    <Text style={styles.swapSymbol}>↔</Text>
-                    {cashLabel && <Text style={styles.cashLabel}>{cashLabel}</Text>}
+                {/* Middle area: ↔ and optional partial cash */}
+                <View style={styles.middleContainer}>
+                    <Text style={styles.swapIcon}>↔</Text>
+                    {cashLabel && (
+                        <Text style={styles.cashLabel}>{cashLabel}</Text>
+                    )}
                 </View>
 
-                {/* Listing B */}
-                <View style={styles.column}>
-                    <Text style={styles.listingTitle}>{listingB?.title || 'Listing B'}</Text>
+                {/* Right Item (Listing B) */}
+                <View style={styles.itemColumn}>
+                    <Text style={styles.itemTitle}>{listingB?.title || 'Item B'}</Text>
                     {listingB?.ImageUrl ? (
-                        <Image source={{ uri: listingB.ImageUrl }} style={styles.image} />
+                        <Image source={{ uri: listingB.ImageUrl }} style={styles.itemImage} />
                     ) : (
-                        <View style={styles.placeholder}>
+                        <View style={styles.itemPlaceholder}>
                             <Text style={styles.placeholderText}>No Image</Text>
                         </View>
                     )}
                 </View>
             </View>
 
-            {/* Optional note from the proposer */}
+            {/* Optional Note */}
             {renderNote()}
 
-            {/* Pickup date/time */}
-            <Text style={styles.pickupDate}>{displayDate}</Text>
+            {/* Pickup Time */}
+            <Text style={styles.pickupLabel}>
+                Pickup: <Text style={styles.pickupValue}>{displayDate}</Text>
+            </Text>
 
-            {/* Status text */}
-            <Text style={styles.status}>Status: {status}</Text>
+            {/* Status */}
+            <Text style={[styles.statusLabel, { color: statusColor }]}>
+                Status: {status}
+            </Text>
 
-            {/* Accept/Decline or waiting message */}
+            {/* If pending and I'm the recipient => Accept/Decline */}
             {showActions && (
-                <View style={styles.buttonsRow}>
+                <View style={styles.actionButtons}>
                     {onAcceptSwap && (
-                        <TouchableOpacity style={[styles.button, styles.acceptBtn]} onPress={onAcceptSwap}>
-                            <Text style={styles.buttonText}>Accept</Text>
+                        <TouchableOpacity style={[styles.actionButton, styles.acceptButton]} onPress={onAcceptSwap}>
+                            <Text style={styles.actionButtonText}>Accept</Text>
                         </TouchableOpacity>
                     )}
                     {onDeclineSwap && (
-                        <TouchableOpacity style={[styles.button, styles.declineBtn]} onPress={onDeclineSwap}>
-                            <Text style={styles.buttonText}>Decline</Text>
+                        <TouchableOpacity style={[styles.actionButton, styles.declineButton]} onPress={onDeclineSwap}>
+                            <Text style={styles.actionButtonText}>Decline</Text>
                         </TouchableOpacity>
                     )}
                 </View>
             )}
+
+            {/* If I'm the proposer => Waiting for a response... */}
             {showWaiting && (
-                <View style={styles.waitingBox}>
-                    <Text style={styles.waitingText}>Waiting for a response...</Text>
+                <View style={styles.waitingContainer}>
+                    <Text style={styles.waitingText}>Waiting for response...</Text>
                 </View>
             )}
         </View>
     );
 }
 
+/* ---------------- STYLES ---------------- */
+
+
+
 const styles = StyleSheet.create({
     container: {
-        borderRadius: 12,
+        borderRadius: 10,
         padding: 12,
-        maxWidth: 280,
+        maxWidth: 300,
 
-        // small shadow
+        // light shadow
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 2,
         elevation: 2,
     },
-    heading: {
-        fontSize: 18,        // bigger
-        fontWeight: '900',   // extra bold
-        color: '#333',       // darker text
-        marginBottom: 10,
+    offerTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 8,
         textAlign: 'center',
-        letterSpacing: 1,    // optional spacing for a bolder look
+        color: '#333',
     },
-    row: {
+    itemsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 8,
     },
-    column: {
+    itemColumn: {
         alignItems: 'center',
-        width: 80, // match image size
+        width: 80,
     },
-    listingTitle: {
+    itemTitle: {
         fontSize: 13,
         fontWeight: '600',
-        marginBottom: 4,
         color: '#333',
+        marginBottom: 4,
         textAlign: 'center',
     },
-    image: {
+    itemImage: {
         width: 70,
         height: 70,
         borderRadius: 8,
         backgroundColor: '#eee',
     },
-    placeholder: {
+    itemPlaceholder: {
         width: 70,
         height: 70,
         borderRadius: 8,
-        backgroundColor: '#ccc',
+        backgroundColor: '#ddd',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -190,66 +209,70 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#666',
     },
-    middleArea: {
+    middleContainer: {
         alignItems: 'center',
         justifyContent: 'center',
     },
-    swapSymbol: {
+    swapIcon: {
         fontSize: 20,
         fontWeight: '700',
         color: '#333',
         marginBottom: 2,
     },
     cashLabel: {
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#333',
-        backgroundColor: '#FFECB3', // pale yellow for partial cash
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 6,
         marginTop: 2,
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#333',
+        backgroundColor: '#FFF',
+        paddingHorizontal: 5,
+        paddingVertical: 2,
+        borderRadius: 4,
+        overflow: 'hidden',
     },
     noteText: {
+        marginTop: 6,
+        fontSize: 13,
         fontStyle: 'italic',
-        fontSize: 13,
         color: '#555',
-        marginBottom: 6,
     },
-    pickupDate: {
-        marginTop: 4,
+    pickupLabel: {
+        marginTop: 6,
         fontSize: 13,
+        color: '#333',
+        fontWeight: '600',
+    },
+    pickupValue: {
+        fontWeight: '400',
         color: '#444',
     },
-    status: {
-        fontSize: 13,
-        fontStyle: 'italic',
-        color: '#666',
+    statusLabel: {
         marginTop: 4,
+        fontSize: 13,
+        fontWeight: '700',
     },
-    buttonsRow: {
+    actionButtons: {
         flexDirection: 'row',
         marginTop: 10,
-        justifyContent: 'space-between',
     },
-    button: {
+    actionButton: {
         flex: 1,
+        borderRadius: 6,
         paddingVertical: 8,
-        borderRadius: 8,
         alignItems: 'center',
         marginHorizontal: 4,
     },
-    acceptBtn: {
+    acceptButton: {
         backgroundColor: '#4CAF50',
     },
-    declineBtn: {
+    declineButton: {
         backgroundColor: '#F44336',
     },
-    buttonText: {
+    actionButtonText: {
         color: '#fff',
         fontWeight: '600',
     },
-    waitingBox: {
+    waitingContainer: {
         marginTop: 10,
         alignItems: 'center',
     },

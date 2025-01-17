@@ -112,7 +112,7 @@ export default function DealBuilderScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.safeArea}  >
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']} >
             {/* Possibly a translucent status bar at the top */}
             < ScrollView contentContainerStyle={styles.scrollContent} >
                 {/* Top header */}

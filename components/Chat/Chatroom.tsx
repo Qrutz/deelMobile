@@ -33,6 +33,7 @@ interface Swap {
     ListingA: Listing;
     ListingB: Listing;
     status?: string; // "pending" | "accepted" etc.
+    pickupTime?: Date;
 }
 
 interface ChatMessage {
