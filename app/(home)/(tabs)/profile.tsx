@@ -14,13 +14,17 @@ import { useFetchUserListings } from '@/hooks/ListingHooks/useFetchMyListings';
 import ProductCard from '@/components/ProductCard';
 import { ProfileInterests } from '@/components/Profile/ProfileInterests';
 import { ProfileHeader } from '@/components/Profile/ProfileHeader';
+import { useFetchMySwaps } from '@/hooks/SwapHooks/useFetchMySwaps';
+import DealCard from '@/components/Profile/DealCard';
+import { router } from 'expo-router';
 
 // Import our new sub-components
 
 
 export default function ProfilePage() {
     const { signOut, getToken } = useAuth();
-    const { data, isLoading, isError } = useFetchUserListings();
+    const { data: dealsData, isLoading: dealsLoading, isError: dealsError } = useFetchMySwaps();
+
 
     const [userData, setUserData] = useState<null | {
         id: string;
@@ -145,31 +149,33 @@ export default function ProfilePage() {
             {/* --- Deels Content --- */}
             {activeTab === 'Deels' ? (
                 <View style={styles.tabContent}>
-                    {isLoading ? (
-                        <ActivityIndicator size="large" color="#FF3C80" />
-                    ) : isError ? (
-                        <Text style={styles.emptyStateText}>Failed to load listings</Text>
-                    ) : data && data.length > 0 ? (
+                    {dealsLoading ? (
+                        <ActivityIndicator />
+                    ) : dealsError ? (
+                        <Text style={styles.emptyStateText}>Failed to load your deals.</Text>
+                    ) : dealsData && dealsData.length > 0 ? (
                         <View style={styles.gridContainer}>
-                            {data.map((listing) => (
-                                <View style={styles.gridItem} key={listing.id}>
-                                    <ProductCard product={listing} />
+                            {dealsData.map((deal) => (
+                                <View style={styles.gridItem} key={deal.id}>
+                                    <DealCard
+                                        deal={deal}
+                                        onPress={() => {
+                                            router.push(`/deal/${deal.id}`);
+                                        }}
+                                    />
                                 </View>
                             ))}
                         </View>
                     ) : (
                         <>
-                            <Text style={styles.emptyStateText}>You don't have anything added yet</Text>
-                            <TouchableOpacity style={styles.addButton}>
-                                <Text style={styles.addButtonText}>+ Add Something</Text>
-                            </TouchableOpacity>
+                            <Text style={styles.emptyStateText}>No deals in progress</Text>
+                            {/* Maybe a "Create Deal" button if relevant */}
                         </>
                     )}
                 </View>
             ) : (
-                // --- Saved Content ---
                 <View style={styles.tabContent}>
-                    <Text style={styles.emptyStateText}>No items saved yet</Text>
+                    {/* Saved listings or something else */}
                 </View>
             )}
         </ScrollView>
@@ -258,9 +264,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+
     },
     gridItem: {
-        width: '48%',
+        width: '100%',
         marginBottom: 16,
     },
 });

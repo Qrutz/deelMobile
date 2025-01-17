@@ -39,4 +39,7 @@ interface Swap {
   proposerId: string;
   recipientId: string;
   status: string; // "accepted", "inProgress", "completed", etc.
+  partialCash?: number;
+  pickupTime: string; // Date as a string in ISO format
+  note?: string;
 }
