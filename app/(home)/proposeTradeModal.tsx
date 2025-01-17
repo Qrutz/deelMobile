@@ -24,6 +24,8 @@ import DealNoteInput from '@/components/ProposeDeal/DealNoteInput';
 import ConfirmButton from '@/components/ProposeDeal/ConfirmButton';
 import SingleItemSelectorModal from '@/components/ProposeDeal/SingleItemSelectorModal';
 import PickupDateInput from '@/components/ProposeDeal/PickupDateInput';
+import MapPickerModal from '@/components/MapPicker';
+import { PickupLocationCard } from '@/components/ProposeDeal/PickupLocationCard';
 
 export default function DealBuilderScreen() {
     const { listingId, recipientId } = useLocalSearchParams();
@@ -42,6 +44,9 @@ export default function DealBuilderScreen() {
     const [note, setNote] = useState('');
     const [showItemModal, setShowItemModal] = useState(false);
     const [pickupDate, setPickupDate] = useState<Date | null>(null); // new date state
+    const [showMapPicker, setShowMapPicker] = useState(false);
+    const [pickupLat, setPickupLat] = useState<number | null>(null);
+    const [pickupLng, setPickupLng] = useState<number | null>(null);
 
 
     // Single item selection
@@ -112,7 +117,7 @@ export default function DealBuilderScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']} >
+        <SafeAreaView style={styles.safeArea}  >
             {/* Possibly a translucent status bar at the top */}
             < ScrollView contentContainerStyle={styles.scrollContent} >
                 {/* Top header */}
@@ -141,6 +146,27 @@ export default function DealBuilderScreen() {
 
                 {/* 3) Pickup Date Input (NEW) */}
                 <PickupDateInput pickupDate={pickupDate} onChangeDate={setPickupDate} />
+
+
+                <PickupLocationCard
+                    pickupLat={pickupLat}
+                    pickupLng={pickupLng}
+                    onPress={() => setShowMapPicker(true)}
+                />
+
+                <MapPickerModal
+                    visible={showMapPicker}
+                    listingLat={targetListing.latitude}
+                    listingLng={targetListing.longitude}
+                    initialLat={pickupLat}
+                    initialLng={pickupLng}
+                    onClose={() => setShowMapPicker(false)}
+                    onLocationSelected={(lat, lng) => {
+                        setPickupLat(lat);
+                        setPickupLng(lng);
+                        setShowMapPicker(false);
+                    }}
+                />
 
 
                 <DealNoteInput note={note} onChangeNote={setNote} />
