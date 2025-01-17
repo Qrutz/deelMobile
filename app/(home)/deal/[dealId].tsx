@@ -1,16 +1,31 @@
 // DealDetailScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Modal,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFetchSwap } from '@/hooks/SwapHooks/useFetchSwap';
-import QRCodeSVG from 'react-native-qrcode-svg'; // <--- library import
-
+import QRCodeSVG from 'react-native-qrcode-svg'; // library import
+import { useUser } from '@clerk/clerk-expo';
 
 export default function DealDetailScreen() {
   const { dealId } = useLocalSearchParams() as { dealId: string };
   const [showQR, setShowQR] = useState(false);
   const [qrValue, setQRValue] = useState('');
+
+  const { user } = useUser();
+
+  // Example: This would come from your user context or Clerk info
+  const currentUserId = user?.id;
+  // Suppose you know who is the "seller" or "proposer"
+  // or store it in "deal" as "proposerId" if that's the seller.
 
   // Fetch the deal data from the API
   const { data: deal, isLoading, isError } = useFetchSwap(dealId);
@@ -42,13 +57,35 @@ export default function DealDetailScreen() {
   const handleComplete = () => {
     // call API: mark as completed
   };
+
+  // Navigate to Chat
   const handleOpenChat = () => {
-    // navigate to chat or router.push('/chat/...'):
+    if (!deal.chatId) {
+      // If no chat linked, show an alert
+      return;
+    }
     router.push(`/chat/${deal.chatId}`);
   };
 
+  // SELLER "Generate QR"
+  const handleGenerateQR = () => {
+    // You might want a custom code or just the deal.id:
+    setQRValue(deal.confirmationCode || deal.id);
+    setShowQR(true);
+  };
+
+  // BUYER "Scan QR"
+  const handleScanQR = () => {
+    // Navigate to a screen that uses expo-barcode-scanner,
+    // passing the deal.id or some needed param.
+    router.push(`/QRScanner?dealId=${deal.id}`);
+  };
+
   // If partialCash is > 0
-  const cashLabel = deal.partialCash && deal.partialCash > 0 ? `+ ${deal.partialCash} kr` : null;
+  const cashLabel =
+    deal.partialCash && deal.partialCash > 0
+      ? `+ ${deal.partialCash} kr`
+      : null;
 
   // Optionally color-code background based on status
   let containerColor = '#FFF';
@@ -68,6 +105,13 @@ export default function DealDetailScreen() {
     default:
       containerColor = '#FFF';
   }
+
+  // Example: 
+  // "If the user is the 'seller' (deal.proposerId === currentUserId) show Generate QR
+  //  if the user is the 'buyer' (deal.recipientId === currentUserId) show Scan QR"
+
+  const isSeller = deal.proposerId === currentUserId;
+  const isBuyer = deal.recipientId === currentUserId;
 
   return (
     <View style={[styles.container, { backgroundColor: containerColor }]}>
@@ -90,9 +134,7 @@ export default function DealDetailScreen() {
           {/* Middle area */}
           <View style={styles.middleContainer}>
             <Ionicons name="swap-horizontal" size={28} color="#333" />
-            {cashLabel && (
-              <Text style={styles.cashLabel}>{cashLabel}</Text>
-            )}
+            {cashLabel && <Text style={styles.cashLabel}>{cashLabel}</Text>}
           </View>
 
           {/* Listing B */}
@@ -112,9 +154,7 @@ export default function DealDetailScreen() {
       <View style={styles.infoContainer}>
         <Text style={styles.infoLabel}>
           Pickup Time:{' '}
-          <Text style={styles.infoValue}>
-            {deal.pickupTime || 'Not set'}
-          </Text>
+          <Text style={styles.infoValue}>{deal.pickupTime || 'Not set'}</Text>
         </Text>
 
         {deal.note && (
@@ -128,24 +168,40 @@ export default function DealDetailScreen() {
         </Text>
       </View>
 
-      {/* Action Buttons */}
+      {/* If “pending” => Accept/Decline */}
       {deal.status === 'pending' && (
         <View style={styles.actionRow}>
-          <TouchableOpacity style={[styles.actionButton, styles.acceptButton]} onPress={handleAccept}>
-            <Ionicons name="checkmark" size={18} color="#FFF" style={{ marginRight: 4 }} />
-            <Text style={styles.actionButtonText}>Accept</Text>
-          </TouchableOpacity>
+          {/* Accept button (only for the recipient) */}
+          {isBuyer && (
+            <TouchableOpacity
+              style={[styles.actionButton, styles.acceptButton]}
+              onPress={handleAccept}
+            >
+              <Ionicons name="checkmark" size={18} color="#FFF" style={{ marginRight: 4 }} />
+              <Text style={styles.actionButtonText}>Accept</Text>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity style={[styles.actionButton, styles.declineButton]} onPress={handleDecline}>
-            <Ionicons name="close" size={18} color="#FFF" style={{ marginRight: 4 }} />
-            <Text style={styles.actionButtonText}>Decline</Text>
-          </TouchableOpacity>
+          {/* Decline button (also for the recipient?) */}
+          {isBuyer && (
+            <TouchableOpacity
+              style={[styles.actionButton, styles.declineButton]}
+              onPress={handleDecline}
+            >
+              <Ionicons name="close" size={18} color="#FFF" style={{ marginRight: 4 }} />
+              <Text style={styles.actionButtonText}>Decline</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
+      {/* If “accepted” => Mark Completed or Payment CTA */}
       {deal.status === 'accepted' && (
         <View style={styles.actionRow}>
-          <TouchableOpacity style={[styles.actionButton, styles.completeButton]} onPress={handleComplete}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.completeButton]}
+            onPress={handleComplete}
+          >
             <Ionicons name="checkmark-done" size={18} color="#FFF" style={{ marginRight: 4 }} />
             <Text style={styles.actionButtonText}>Mark Completed</Text>
           </TouchableOpacity>
@@ -158,20 +214,37 @@ export default function DealDetailScreen() {
         <Text style={styles.chatButtonText}>Open Chat</Text>
       </TouchableOpacity>
 
-      {/* Example: if deal.status === 'accepted' => Show "Generate QR" */}
+      {/* Generate or Scan QR Section */}
       {deal.status === 'accepted' && (
-        <TouchableOpacity style={styles.qrButton} onPress={
-          () => {
-            setQRValue(deal.id);
-            setShowQR(true);
-          }
-        }>
-          <Ionicons name="qr-code-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={styles.qrButtonText}>Show QR</Text>
-        </TouchableOpacity>
+        <View style={styles.qrRow}>
+          {/* If I'm the seller => "Generate QR" */}
+          {isSeller && (
+            <TouchableOpacity
+              style={[styles.qrButton, { backgroundColor: '#9C27B0' }]}
+              onPress={() => {
+                setQRValue(deal.confirmationCode || deal.id);
+                setShowQR(true);
+              }}
+            >
+              <Ionicons name="qr-code-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
+              <Text style={styles.qrButtonText}>Show QR</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* If I'm the buyer => "Scan QR" */}
+          {isBuyer && (
+            <TouchableOpacity
+              style={[styles.qrButton, { backgroundColor: '#4CAF50' }]}
+              onPress={handleScanQR}
+            >
+              <Ionicons name="camera-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
+              <Text style={styles.qrButtonText}>Scan QR</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       )}
 
-      {/* QR Modal */}
+      {/* QR Modal (only shown if "Show QR" button pressed) */}
       <Modal visible={showQR} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           {/* Clickable background to close */}
@@ -181,12 +254,9 @@ export default function DealDetailScreen() {
             activeOpacity={1}
           />
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Scan this code</Text>
-            <QRCodeSVG
-              value={qrValue}
-              size={200}
-            />
-            <Text style={styles.modalSubtitle}>Deal ID or Code: {qrValue}</Text>
+            <Text style={styles.modalTitle}>Scan this code to confirm exchange</Text>
+            <QRCodeSVG value={qrValue} size={200} />
+            <Text style={styles.modalSubtitle}>Deal Code: {qrValue}</Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setShowQR(false)}
@@ -196,7 +266,6 @@ export default function DealDetailScreen() {
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }
@@ -213,7 +282,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 24,
-    // pastel background color is set dynamically based on status
   },
   headerTitle: {
     fontSize: 18,
@@ -222,7 +290,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 16,
   },
-
   itemsCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -267,16 +334,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     color: '#333',
     fontWeight: '600',
-    overflow: 'hidden',
     fontSize: 12,
   },
-
   infoContainer: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
-    // optional slight shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -309,7 +373,6 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: '700',
   },
-
   actionRow: {
     flexDirection: 'row',
     marginTop: 12,
@@ -346,27 +409,34 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    marginTop: 12,
   },
   chatButtonText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 15,
   },
+
+  // The row that contains "Show QR" / "Scan QR"
+  qrRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
   qrButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#9C27B0',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    alignSelf: 'center',
-    marginTop: 12,
+    marginHorizontal: 6,
   },
   qrButtonText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 14,
   },
+
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
