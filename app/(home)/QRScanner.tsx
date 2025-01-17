@@ -16,6 +16,7 @@ import {
 } from 'expo-camera';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAcceptDeal } from '@/hooks/SwapHooks/useCompleteDeal';
 
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
@@ -25,6 +26,8 @@ export default function QRScannerScreen() {
     const router = useRouter();
     // If you passed some param, e.g. "dealId", you can retrieve it:
     const { dealId } = useLocalSearchParams() as { dealId?: string };
+
+    const acceptDealMutation = useAcceptDeal();
 
     // Manage camera permission
     const [permission, requestPermission] = useCameraPermissions();
@@ -81,14 +84,18 @@ export default function QRScannerScreen() {
         // await fetch('/swap/confirm-scan', { method: 'PATCH', body: JSON.stringify({ code: data }) })
         // or do local logic
 
-        await fetch(`${API_URL}/swap/${dealId}/complete`, {
-            method: 'PATCH',
-            body: JSON.stringify({ code: data }),
-        });
+        acceptDealMutation.mutate(dealId!, {
+            onSuccess: () => {
+                Alert.alert('Accepted!', 'Deal was accepted successfully');
+                router.back();
 
+
+            },
+            onError: () => {
+                Alert.alert('Error', 'Could not accept deal');
+            },
+        })
         // Show a success message
-        Alert.alert('Success', 'Scan successful!');
-        router.back();
 
 
     };
