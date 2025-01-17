@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Listing } from '@/types';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Props {
     visible: boolean;
@@ -63,7 +64,8 @@ export default function SingleItemSelectorModal({
 
     return (
         <Modal visible={visible} animationType="slide">
-            <View style={styles.modalContainer}>
+
+            <SafeAreaView style={styles.modalContainer}>
                 {/* Header Row */}
                 <View style={styles.modalHeader}>
                     <Text style={styles.modalTitle}>Select Your Item</Text>
@@ -81,7 +83,7 @@ export default function SingleItemSelectorModal({
                     columnWrapperStyle={{ justifyContent: 'space-between' }}
                     contentContainerStyle={styles.listContainer}
                 />
-            </View>
+            </SafeAreaView>
         </Modal>
     );
 }
