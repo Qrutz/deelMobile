@@ -42,4 +42,5 @@ interface Swap {
   partialCash?: number;
   pickupTime: string; // Date as a string in ISO format
   note?: string;
+  chatId?: string;
 }

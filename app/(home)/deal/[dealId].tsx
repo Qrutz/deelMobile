@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useFetchSwap } from '@/hooks/SwapHooks/useFetchSwap';
 import QRCodeSVG from 'react-native-qrcode-svg'; // <--- library import
 
@@ -44,6 +44,7 @@ export default function DealDetailScreen() {
   };
   const handleOpenChat = () => {
     // navigate to chat or router.push('/chat/...'):
+    router.push(`/chat/${deal.chatId}`);
   };
 
   // If partialCash is > 0
