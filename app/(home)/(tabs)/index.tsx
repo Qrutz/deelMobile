@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location'; // <-- import from expo-location
 import { useRouter } from 'expo-router';
-import { useFetchListings } from '@/hooks/ListingHooks/useFetchListings';
+import { useFetchProximityListings } from '@/hooks/ListingHooks/useFetchListings';
 import { Listing } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { CATEGORIES } from '@/constants/Categories';
@@ -28,10 +28,10 @@ export default function Marketplace() {
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
 
-    const [userLat, setUserLat] = useState<number | null>(null);
-    const [userLng, setUserLng] = useState<number | null>(null);
+    const [userLat, setUserLat] = useState<number | undefined>(undefined);
+    const [userLng, setUserLng] = useState<number | undefined>(undefined);
 
-    const { data: listings, isLoading, error } = useFetchListings();
+    const { data: listings, isLoading, error } = useFetchProximityListings(userLat, userLng);
     const router = useRouter();
 
     // Animate glow
