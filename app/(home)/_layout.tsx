@@ -144,6 +144,10 @@ export default function HomeStack() {
                 <Stack.Screen name="QRScanner" options={{
                     presentation: 'fullScreenModal',
                 }} />
+
+                <Stack.Screen name="counterProposal" options={{
+                    presentation: 'fullScreenModal',
+                }} />
                 {/*
 
             {/*

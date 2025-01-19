@@ -82,6 +82,8 @@ export default function DealBuilderScreen() {
                     recipientId,
                     partialCash: Number(partialCash) || 0,
                     pickupTime: pickupDate,
+                    pickupLat,
+                    pickupLng,
                     note,
                 }),
             });
@@ -167,7 +169,7 @@ export default function DealBuilderScreen() {
                         setShowMapPicker(false);
                     }}
                 />
-
+                <View style={styles.divider} />
 
                 <DealNoteInput note={note} onChangeNote={setNote} />
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -13,36 +13,49 @@ import {
     Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location'; // <-- import from expo-location
 import { useRouter } from 'expo-router';
 import { useFetchListings } from '@/hooks/ListingHooks/useFetchListings';
 import { Listing } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { CATEGORIES } from '@/constants/Categories';
-
-
+import { haversineDistance } from '@/utils/distance';
 
 const { width } = Dimensions.get('window');
-const ITEM_HORIZONTAL_MARGIN = 8;
-const TOTAL_HORIZONTAL_MARGIN = ITEM_HORIZONTAL_MARGIN * 2 * 2;
-const cardWidth = (width - TOTAL_HORIZONTAL_MARGIN) / 2;
-
-// Glow size (diameter)
-const GLOW_SIZE = 40;
 
 export default function Marketplace() {
     const [searchActive, setSearchActive] = useState(false);
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
 
+    const [userLat, setUserLat] = useState<number | null>(null);
+    const [userLng, setUserLng] = useState<number | null>(null);
+
     const { data: listings, isLoading, error } = useFetchListings();
     const router = useRouter();
 
-    /** Animated values for glow effect */
+    // Animate glow
     const glowScale = useRef(new Animated.Value(1)).current;
     const glowOpacity = useRef(new Animated.Value(0.4)).current;
 
+    // ----- 1) Request location on mount or first render
     useEffect(() => {
-        // Create a continuous glow effect by animating scale + opacity in a loop
+        (async () => {
+            // Ask for permission
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+                const loc = await Location.getCurrentPositionAsync({});
+                setUserLat(loc.coords.latitude);
+                setUserLng(loc.coords.longitude);
+            } else {
+                // handle permission denied if needed
+                console.log('Location permission not granted');
+            }
+        })();
+    }, []);
+
+    // Animate glow
+    useEffect(() => {
         Animated.loop(
             Animated.sequence([
                 Animated.parallel([
@@ -84,7 +97,7 @@ export default function Marketplace() {
         return <Text style={{ margin: 20 }}>Error loading listings</Text>;
     }
 
-    // Filter listings by category and search
+    // ----- 2) Filter listings by category & search
     const filteredListings = (listings || [])
         .filter((item: Listing) => {
             if (selectedCategory === 'All') return true;
@@ -106,7 +119,7 @@ export default function Marketplace() {
 
     return (
         <View style={styles.container}>
-            {/* 1) Minimal Header */}
+            {/* Minimal Header */}
             <View style={styles.header}>
                 <Image
                     source={require('@/assets/logo.png')}
@@ -115,10 +128,9 @@ export default function Marketplace() {
                 />
 
                 <View style={styles.headerRight}>
-                    {/* 2) Lightning Icon with Glow */}
+                    {/* Glow Icon + Map link */}
                     <TouchableOpacity onPress={handleLightningPress} style={styles.iconButton}>
                         <View style={styles.glowIconWrapper}>
-                            {/* Glow container behind the icon */}
                             <Animated.View
                                 style={[
                                     styles.glowCircle,
@@ -128,19 +140,18 @@ export default function Marketplace() {
                                     },
                                 ]}
                             />
-                            {/* Actual icon on top */}
                             <Ionicons name="map" size={24} color="#333" />
                         </View>
                     </TouchableOpacity>
 
-                    {/* 3) Search icon toggles the separate search bar below */}
+                    {/* Search icon toggles the separate search bar below */}
                     <TouchableOpacity onPress={handleSearchIconPress} style={styles.iconButton}>
                         <Ionicons name="search" size={24} color="#333" />
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* 4) Search Bar (below header if active) */}
+            {/* Search Bar (below header if active) */}
             {searchActive && (
                 <View style={styles.searchContainer}>
                     <View style={styles.searchBar}>
@@ -162,7 +173,7 @@ export default function Marketplace() {
                 </View>
             )}
 
-            {/* 5) Categories Row */}
+            {/* Categories Row */}
             <View style={styles.categoriesContainer}>
                 <ScrollView
                     horizontal
@@ -200,29 +211,41 @@ export default function Marketplace() {
                 </ScrollView>
             </View>
 
-            {/* 6) Product Grid */}
+            {/* Product Grid */}
             <FlatList
                 data={filteredListings}
                 keyExtractor={(item) => item.id.toString()}
                 numColumns={2}
                 contentContainerStyle={styles.gridContainer}
-                renderItem={({ item }) => (
-                    <View style={styles.gridItem}>
-                        <ProductCard product={item} />
-                    </View>
-                )}
+                renderItem={({ item }) => {
+                    // If we have user lat/lng, calculate distance
+                    let distanceKM: number | undefined;
+                    if (userLat != null && userLng != null) {
+                        distanceKM = haversineDistance(
+                            userLat,
+                            userLng,
+                            item.latitude,
+                            item.longitude
+                        );
+                    }
+                    return (
+                        <View style={styles.gridItem}>
+                            <ProductCard product={item} distanceKM={distanceKM} />
+                        </View>
+                    );
+                }}
             />
         </View>
     );
 }
 
+/** STYLES */
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f8f8f8',
     },
 
-    /* 1) Header */
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -233,42 +256,34 @@ const styles = StyleSheet.create({
         borderBottomColor: '#e0e0e0',
         borderBottomWidth: 1,
     },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#333',
-    },
     headerRight: {
         flexDirection: 'row',
-        alignItems: 'center', // ensure all icons align vertically center
+        alignItems: 'center',
         marginLeft: 'auto',
     },
     iconButton: {
-        marginLeft: 16,          // spacing between icons
-        alignItems: 'center',    // center the icon horizontally
-        justifyContent: 'center',// center the icon vertically
-        width: 40,               // fix width to align them consistently
-        height: 40,              // fix height to align them consistently
+        marginLeft: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 40,
+        height: 40,
     },
 
-    /* 2) Glow Icon Wrapping */
     glowIconWrapper: {
-        width: 40,    // same as iconButton for consistent bounding
+        width: 40,
         height: 40,
         justifyContent: 'center',
         alignItems: 'center',
-        // no marginLeft here; it's handled by iconButton
     },
     glowCircle: {
         position: 'absolute',
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255, 201, 0, 0.65)', // glow color
+        backgroundColor: 'rgba(255, 201, 0, 0.65)',
         zIndex: -1,
     },
 
-    /* 4) Search Bar */
     searchContainer: {
         backgroundColor: '#fff',
         paddingHorizontal: 16,
@@ -293,7 +308,6 @@ const styles = StyleSheet.create({
         height: 36,
     },
 
-    /* 5) Categories */
     categoriesContainer: {
         backgroundColor: '#fff',
         paddingVertical: 10,
@@ -327,14 +341,12 @@ const styles = StyleSheet.create({
         color: '#4CAF50',
     },
 
-    /* 6) Product Grid */
     gridContainer: {
-        padding: 8,     // or whatever you want
-        // No need to do complex width calculations here
+        padding: 8,
     },
     gridItem: {
-        flex: 1,        // each item takes up half of the row
-        margin: 8,      // spacing around each item
-        // optionally backgroundColor: '#fff', etc.
+        width: '48%',
+        marginBottom: 16,
+        marginHorizontal: '1%',
     },
 });

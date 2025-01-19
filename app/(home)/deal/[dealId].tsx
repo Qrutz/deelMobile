@@ -1,4 +1,3 @@
-// DealDetailScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -7,34 +6,24 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  Modal,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFetchSwap } from '@/hooks/SwapHooks/useFetchSwap';
-import QRCodeSVG from 'react-native-qrcode-svg'; // library import
 import { useUser } from '@clerk/clerk-expo';
 
 export default function DealDetailScreen() {
   const { dealId } = useLocalSearchParams() as { dealId: string };
-  const [showQR, setShowQR] = useState(false);
-  const [qrValue, setQRValue] = useState('');
-
-  const { user } = useUser();
-
-  // Example: This would come from your user context or Clerk info
-  const currentUserId = user?.id;
-  // Suppose you know who is the "seller" or "proposer"
-  // or store it in "deal" as "proposerId" if that's the seller.
-
-  // Fetch the deal data from the API
   const { data: deal, isLoading, isError } = useFetchSwap(dealId);
+  const { user } = useUser();
+  const currentUserId = user?.id;
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#D97FB8" />
-        <Text style={{ marginTop: 10, color: '#666' }}>Loading deal...</Text>
+        <ActivityIndicator size="large" color="#E91E63" />
+        <Text style={styles.loadingText}>Loading Deal...</Text>
       </View>
     );
   }
@@ -42,56 +31,58 @@ export default function DealDetailScreen() {
   if (!deal || isError) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={{ color: '#666' }}>Failed to load the deal details.</Text>
+        <Text style={styles.errorText}>Failed to load this deal.</Text>
       </View>
     );
   }
 
-  // Handlers for actions
-  const handleAccept = () => {
-    // call API: accept the deal
-  };
-  const handleDecline = () => {
-    // call API: decline the deal
-  };
-  const handleComplete = () => {
-    // call API: mark as completed
+  const isSeller = deal.proposerId === currentUserId;
+  const isBuyer = deal.recipientId === currentUserId;
+
+  // Basic placeholders for accepting/declining/completing
+  const handleAccept = async () => {
+    // e.g. call PATCH /swap/:dealId/accept
+    Alert.alert('Success', 'Deal accepted (mock).');
   };
 
-  // Navigate to Chat
+  const handleDecline = async () => {
+    // e.g. call PATCH /swap/:dealId/decline
+    Alert.alert('Success', 'Deal declined (mock).');
+  };
+
+  const handleComplete = async () => {
+    // e.g. call PATCH /swap/:dealId/complete
+    Alert.alert('Success', 'Deal completed (mock).');
+  };
+
+  // Open Chat
   const handleOpenChat = () => {
     if (!deal.chatId) {
-      // If no chat linked, show an alert
+      Alert.alert('No Chat Linked', 'This deal has no chatId.');
       return;
     }
     router.push(`/chat/${deal.chatId}`);
   };
 
-  // SELLER "Generate QR"
-  const handleGenerateQR = () => {
-    // You might want a custom code or just the deal.id:
-    setQRValue(deal.confirmationCode || deal.id);
-    setShowQR(true);
+  // Navigate to the CounterProposal screen
+  // We'll pass the current swap's id in the query param `swapId`
+  const handleCounter = () => {
+    router.push({
+      pathname: '/(home)/counterProposal',
+      params: { swapId: deal.id }, // or dealId if you keep consistent naming
+    });
   };
 
-  // BUYER "Scan QR"
-  const handleScanQR = () => {
-    // Navigate to a screen that uses expo-barcode-scanner,
-    // passing the deal.id or some needed param.
-    router.push(`/QRScanner?dealId=${deal.id}`);
-  };
+  // Optionally display partialCash
+  const cashLabel = deal.partialCash && deal.partialCash > 0
+    ? `+ ${deal.partialCash} kr`
+    : null;
 
-  // If partialCash is > 0
-  const cashLabel =
-    deal.partialCash && deal.partialCash > 0
-      ? `+ ${deal.partialCash} kr`
-      : null;
-
-  // Optionally color-code background based on status
+  // Color code container
   let containerColor = '#FFF';
   switch (deal.status) {
     case 'pending':
-      containerColor = '#FCE4EC'; // pastel pink
+      containerColor = '#FFF9C4'; // pastel yellow
       break;
     case 'accepted':
       containerColor = '#C8E6C9'; // pastel green
@@ -106,285 +97,200 @@ export default function DealDetailScreen() {
       containerColor = '#FFF';
   }
 
-  // Example: 
-  // "If the user is the 'seller' (deal.proposerId === currentUserId) show Generate QR
-  //  if the user is the 'buyer' (deal.recipientId === currentUserId) show Scan QR"
-
-  const isSeller = deal.proposerId === currentUserId;
-  const isBuyer = deal.recipientId === currentUserId;
-
   return (
     <View style={[styles.container, { backgroundColor: containerColor }]}>
-      <Text style={styles.headerTitle}>Trade Overview</Text>
+      <Text style={styles.headerTitle}>Deal Details</Text>
 
       {/* Items row */}
-      <View style={styles.itemsCard}>
-        <View style={styles.itemsRow}>
-          {/* Listing A */}
-          <View style={styles.itemColumn}>
-            <Text style={styles.itemTitle} numberOfLines={1}>
-              {deal.listingA?.title || 'Item A'}
-            </Text>
-            <Image
-              source={{ uri: deal.listingA?.ImageUrl }}
-              style={styles.itemImage}
-            />
-          </View>
+      <View style={styles.itemsRow}>
+        <View style={styles.itemColumn}>
+          <Text style={styles.itemTitle}>{deal.listingA?.title || 'Item A'}</Text>
+          <Image
+            source={{ uri: deal.listingA?.ImageUrl }}
+            style={styles.itemImage}
+          />
+        </View>
 
-          {/* Middle area */}
-          <View style={styles.middleContainer}>
-            <Ionicons name="swap-horizontal" size={28} color="#333" />
-            {cashLabel && <Text style={styles.cashLabel}>{cashLabel}</Text>}
-          </View>
+        <View style={styles.swapContainer}>
+          <Ionicons name="swap-horizontal" size={26} color="#333" />
+          {cashLabel && (
+            <Text style={styles.cashLabel}>{cashLabel}</Text>
+          )}
+        </View>
 
-          {/* Listing B */}
-          <View style={styles.itemColumn}>
-            <Text style={styles.itemTitle} numberOfLines={1}>
-              {deal.listingB?.title || 'Item B'}
-            </Text>
-            <Image
-              source={{ uri: deal.listingB?.ImageUrl }}
-              style={styles.itemImage}
-            />
-          </View>
+        <View style={styles.itemColumn}>
+          <Text style={styles.itemTitle}>{deal.listingB?.title || 'Item B'}</Text>
+          <Image
+            source={{ uri: deal.listingB?.ImageUrl }}
+            style={styles.itemImage}
+          />
         </View>
       </View>
 
-      {/* Additional info */}
-      <View style={styles.infoContainer}>
+      {/* Info box */}
+      <View style={styles.infoBox}>
         <Text style={styles.infoLabel}>
-          Pickup Time:{' '}
-          <Text style={styles.infoValue}>{deal.pickupTime || 'Not set'}</Text>
+          Pickup Time: <Text style={styles.infoValue}>{deal.pickupTime || 'Not Set'}</Text>
         </Text>
-
         {deal.note && (
-          <Text style={styles.noteText}>
-            Note: “{deal.note}”
-          </Text>
+          <Text style={styles.noteText}>Note: “{deal.note}”</Text>
         )}
-
-        <Text style={[styles.statusText, styles.bold]}>
-          Status: <Text style={styles.statusValue}>{deal.status}</Text>
+        <Text style={styles.infoLabel}>
+          Status: <Text style={styles.infoValue}>{deal.status}</Text>
         </Text>
       </View>
 
-      {/* If “pending” => Accept/Decline */}
-      {deal.status === 'pending' && (
-        <View style={styles.actionRow}>
-          {/* Accept button (only for the recipient) */}
-          {isBuyer && (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.acceptButton]}
-              onPress={handleAccept}
-            >
-              <Ionicons name="checkmark" size={18} color="#FFF" style={{ marginRight: 4 }} />
-              <Text style={styles.actionButtonText}>Accept</Text>
-            </TouchableOpacity>
-          )}
+      {/* Action Buttons Based on Status & Role */}
+      {deal.status === 'pending' && isBuyer && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.acceptButton]}
+            onPress={handleAccept}
+          >
+            <Text style={styles.actionButtonText}>Accept</Text>
+          </TouchableOpacity>
 
-          {/* Decline button (also for the recipient?) */}
-          {isBuyer && (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.declineButton]}
-              onPress={handleDecline}
-            >
-              <Ionicons name="close" size={18} color="#FFF" style={{ marginRight: 4 }} />
-              <Text style={styles.actionButtonText}>Decline</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.declineButton]}
+            onPress={handleDecline}
+          >
+            <Text style={styles.actionButtonText}>Decline</Text>
+          </TouchableOpacity>
+
+          {/* The new "Counter" button */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.counterButton]}
+            onPress={handleCounter}
+          >
+            <Ionicons name="create-outline" size={18} color="#FFF" style={{ marginRight: 4 }} />
+            <Text style={styles.actionButtonText}>Counter</Text>
+          </TouchableOpacity>
         </View>
       )}
 
-      {/* If “accepted” => Mark Completed or Payment CTA */}
       {deal.status === 'accepted' && (
-        <View style={styles.actionRow}>
+        <View style={styles.actionsRow}>
           <TouchableOpacity
             style={[styles.actionButton, styles.completeButton]}
             onPress={handleComplete}
           >
-            <Ionicons name="checkmark-done" size={18} color="#FFF" style={{ marginRight: 4 }} />
             <Text style={styles.actionButtonText}>Mark Completed</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Chat Button */}
-      <TouchableOpacity style={styles.chatButton} onPress={handleOpenChat}>
-        <Ionicons name="chatbubble-ellipses-outline" size={20} color="#FFF" style={{ marginRight: 6 }} />
-        <Text style={styles.chatButtonText}>Open Chat</Text>
-      </TouchableOpacity>
-
-      {/* Generate or Scan QR Section */}
-      {deal.status === 'accepted' && (
-        <View style={styles.qrRow}>
-          {/* If I'm the seller => "Generate QR" */}
-          {isSeller && (
-            <TouchableOpacity
-              style={[styles.qrButton, { backgroundColor: '#9C27B0' }]}
-              onPress={() => {
-                setQRValue(deal.confirmationCode || deal.id);
-                setShowQR(true);
-              }}
-            >
-              <Ionicons name="qr-code-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
-              <Text style={styles.qrButtonText}>Show QR</Text>
-            </TouchableOpacity>
-          )}
-
-          {/* If I'm the buyer => "Scan QR" */}
-          {isBuyer && (
-            <TouchableOpacity
-              style={[styles.qrButton, { backgroundColor: '#4CAF50' }]}
-              onPress={handleScanQR}
-            >
-              <Ionicons name="camera-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
-              <Text style={styles.qrButtonText}>Scan QR</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      {/* Chat Button if chatId exists */}
+      {deal.chatId && (
+        <TouchableOpacity style={styles.chatButton} onPress={handleOpenChat}>
+          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#FFF" style={{ marginRight: 6 }} />
+          <Text style={styles.chatButtonText}>Open Chat</Text>
+        </TouchableOpacity>
       )}
-
-      {/* QR Modal (only shown if "Show QR" button pressed) */}
-      <Modal visible={showQR} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          {/* Clickable background to close */}
-          <TouchableOpacity
-            style={styles.modalBg}
-            onPress={() => setShowQR(false)}
-            activeOpacity={1}
-          />
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Scan this code to confirm exchange</Text>
-            <QRCodeSVG value={qrValue} size={200} />
-            <Text style={styles.modalSubtitle}>Deal Code: {qrValue}</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowQR(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
-/* -------- STYLES -------- */
+// Minimal styles
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-
+  loadingText: {
+    marginTop: 8,
+    color: '#666',
+  },
+  errorText: {
+    color: '#999',
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    padding: 16,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
     textAlign: 'center',
-    marginBottom: 16,
-  },
-  itemsCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-    marginBottom: 16,
+    marginBottom: 12,
+    color: '#333',
   },
   itemsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-evenly',
+    marginBottom: 16,
   },
   itemColumn: {
     alignItems: 'center',
-    width: 90,
+    width: 100,
   },
   itemTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 4,
-    textAlign: 'center',
+    color: '#333',
   },
   itemImage: {
     width: 70,
     height: 70,
-    borderRadius: 6,
-    backgroundColor: '#eee',
+    backgroundColor: '#EEE',
+    borderRadius: 8,
   },
-  middleContainer: {
+  swapContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   cashLabel: {
-    marginTop: 4,
-    backgroundColor: '#eee',
-    borderRadius: 6,
+    marginTop: 2,
+    backgroundColor: '#FFF',
     paddingHorizontal: 6,
-    color: '#333',
-    fontWeight: '600',
+    borderRadius: 6,
     fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 4,
+    overflow: 'hidden',
   },
-  infoContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+  infoBox: {
+    backgroundColor: '#FFF',
     padding: 12,
+    borderRadius: 12,
     marginBottom: 16,
+    // small shadow
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
     elevation: 1,
   },
   infoLabel: {
     fontSize: 14,
+    fontWeight: '600',
     color: '#333',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   infoValue: {
     fontWeight: '400',
-    color: '#444',
+    color: '#555',
   },
   noteText: {
-    fontSize: 13,
     fontStyle: 'italic',
-    color: '#555',
-    marginBottom: 8,
+    color: '#777',
+    marginBottom: 4,
   },
-  statusText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  statusValue: {
-    color: '#333',
-    fontWeight: '600',
-  },
-  bold: {
-    fontWeight: '700',
-  },
-  actionRow: {
+  actionsRow: {
     flexDirection: 'row',
-    marginTop: 12,
     justifyContent: 'center',
+    marginVertical: 12,
   },
   actionButton: {
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginHorizontal: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginHorizontal: 6,
   },
   acceptButton: {
     backgroundColor: '#4CAF50',
@@ -392,85 +298,31 @@ const styles = StyleSheet.create({
   declineButton: {
     backgroundColor: '#F44336',
   },
+  counterButton: {
+    backgroundColor: '#9C27B0',
+  },
   completeButton: {
     backgroundColor: '#FF9800',
   },
   actionButtonText: {
-    color: '#fff',
+    color: '#FFF',
     fontWeight: '600',
     fontSize: 14,
+    marginLeft: 4,
   },
-
   chatButton: {
     flexDirection: 'row',
-    alignSelf: 'center',
     alignItems: 'center',
     backgroundColor: '#E91E63',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    alignSelf: 'center',
     marginTop: 12,
   },
   chatButtonText: {
-    color: '#fff',
+    color: '#FFF',
     fontWeight: '700',
     fontSize: 15,
-  },
-
-  // The row that contains "Show QR" / "Scan QR"
-  qrRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  qrButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginHorizontal: 6,
-  },
-  qrButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalBg: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#444',
-    marginTop: 10,
-  },
-  closeButton: {
-    marginTop: 16,
-    backgroundColor: '#999',
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: '600',
   },
 });
