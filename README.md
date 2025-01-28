@@ -1,50 +1,44 @@
-# Welcome to your Expo app 👋
+# Deel — A Campus Swap & Trading App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A **hyperlocal marketplace** built for **Gothenburg students** to easily buy, sell, and **swap** items on campus. The core idea is to **reduce friction** and encourage **trust** for real-time trades—be it textbooks, furniture, or electronics.
 
-## Get started
+<img src="./assets/readmeimages/marketplace.png" alt="Deel Main Screen" width="300" />
 
-1. Install dependencies
+> **Note:** This project is a **work in progress**. The core features are functional, but additional development is ongoing.
 
+---
+
+## Key Features
+
+1. **Simple Listings**  
+   - Students can list items with images, titles, descriptions, and optional tags (like “Textbooks” or “Electronics”).
+   - Designed for quick posting and browsing, tailored to campus needs.
+
+2. **Chat-Based Negotiation**  
+   - Real-time messaging system (Socket.io) for proposing swaps, discussing details, and finalizing agreements.
+
+3. **QR-Code Verification**  
+   - A **QR code** workflow for in-person meetups, ensuring secure and **hassle-free** item exchanges.
+
+4. **Campus Focus**  
+   - Ideal for **Gothenburg University** students but can be adapted for any local community or campus environment.
+
+---
+
+## Tech Stack
+
+- **Front End**: [React Native (Expo)](https://expo.dev/)  
+- **Back End**: [Node.js](https://nodejs.org/) + [Express.js](https://expressjs.com/)  
+- **Database**: [PostgreSQL](https://www.postgresql.org/) + [Prisma](https://www.prisma.io/)  
+- **Real-Time Chat**: [Socket.io](https://socket.io/)  
+- **Authentication**: [Clerk](https://clerk.dev/)  
+- **QR Generation**: [react-native-qrcode-svg](https://github.com/awesomejerry/react-native-qrcode-svg)
+
+---
+
+## Getting Started
+
+1. **Clone the Repo**
    ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+   git clone https://github.com/YourUsername/Deel.git
+   cd Deel
