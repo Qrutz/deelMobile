@@ -1,70 +1,62 @@
-// PaymentSheetScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, Button, Alert, ActivityIndicator } from 'react-native';
-import { useStripe } from '@stripe/stripe-react-native';
+import * as WebBrowser from 'expo-web-browser';
+import { useAuth } from '@clerk/clerk-expo';
 
 const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
 export default function PaymentSheetScreen() {
     const [loading, setLoading] = useState(false);
-    const { initPaymentSheet, presentPaymentSheet } = useStripe();
+    const { userId } = useAuth();
 
-    async function createPaymentIntentOnServer(amount: number) {
-        // Suppose your server is at some base URL
-        const response = await fetch(`${API_URL}/payment/create-payment-intent`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount }), // e.g. 5000 => $50
-        });
-        if (!response.ok) {
-            throw new Error('Failed to create payment intent');
-        }
-        const { clientSecret } = await response.json();
-        return clientSecret;
-    }
+    // In a real app, you'd get `userId` from auth (e.g., context, Redux, or props).
+    // For demonstration, let's hardcode it or assume you pass it in some other way.
 
-    async function openPaymentSheet() {
+
+    async function handleConnectStripe() {
         try {
             setLoading(true);
 
-            // 1) Create PaymentIntent with the partial-cash amount (e.g., $50 -> 5000)
-            const clientSecret = await createPaymentIntentOnServer(5000);
-
-            // 2) Initialize the Payment Sheet
-            const initResponse = await initPaymentSheet({
-                paymentIntentClientSecret: clientSecret,
-                merchantDisplayName: 'My Swap App',
-                // If you want an ephemeralKey for saved cards, you'd pass that too
+            // 1) Call your backend to create or fetch the Express account & get onboarding URL
+            const response = await fetch(`${API_URL}/payment/create-express-account`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId }),
             });
-            if (initResponse.error) {
-                Alert.alert('Error', initResponse.error.message);
-                setLoading(false);
-                return;
+
+            if (!response.ok) {
+                throw new Error('Failed to create Express account link');
             }
 
-            // 3) Present the Payment Sheet
-            const presentResponse = await presentPaymentSheet();
+            const data = await response.json();
+            const { url } = data;
+
+            if (!url) {
+                throw new Error('No onboarding URL returned');
+            }
+
+            // 2) Open Stripe's onboarding link in a browser
+            const result = await WebBrowser.openBrowserAsync(url);
+            // result may contain info about whether the user closed the browser, etc.
+
             setLoading(false);
 
-            if (presentResponse.error) {
-                Alert.alert('Payment Failed', presentResponse.error.message);
-            } else {
-                Alert.alert('Payment Success!', 'Partial Cash has been paid!');
-                // (Optional) Call your backend to confirm the swap's partial cash is now paid
-            }
+            // Optionally, you can handle the "return_url" or "refresh_url" flow if Stripe
+            // redirects back to your app. That typically requires deep linking or a universal link.
+
         } catch (err: any) {
             setLoading(false);
-            Alert.alert('Error', err.message);
+            Alert.alert('Error', err.message || 'Something went wrong');
         }
     }
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Pay Partial Cash</Text>
+            <Text>Connect Your Stripe Account</Text>
             {loading ? (
                 <ActivityIndicator size="large" />
             ) : (
-                <Button title="Pay $50" onPress={openPaymentSheet} />
+                <Button title="Connect Stripe" onPress={handleConnectStripe} />
             )}
         </View>
     );

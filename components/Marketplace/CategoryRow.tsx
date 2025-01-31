@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 type Category = {
@@ -13,40 +19,33 @@ type Props = {
     onCategoryPress: (cat: string) => void;
 };
 
-export default function CategoryRow({ categories, selectedCategory, onCategoryPress }: Props) {
+export default function CategoryRow({
+    categories,
+    selectedCategory,
+    onCategoryPress,
+}: Props) {
     return (
-        <View style={styles.categoriesContainer}>
+        <View style={styles.container}>
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryRow}
+                contentContainerStyle={styles.scrollContent}
             >
                 {categories.map((cat) => {
                     const isActive = cat.label === selectedCategory;
                     return (
                         <TouchableOpacity
                             key={cat.label}
-                            style={styles.categoryItem}
+                            style={[styles.chip, isActive && styles.chipActive]}
                             onPress={() => onCategoryPress(cat.label)}
                         >
-                            <View
-                                style={[
-                                    styles.iconCircle,
-                                    isActive ? styles.iconCircleActive : {},
-                                ]}
-                            >
-                                <Ionicons
-                                    name={cat.icon as keyof typeof Ionicons.glyphMap}
-                                    size={22}
-                                    color={isActive ? '#fff' : '#333'}
-                                />
-                            </View>
-                            <Text
-                                style={[
-                                    styles.categoryLabel,
-                                    isActive && styles.categoryLabelActive,
-                                ]}
-                            >
+                            <Ionicons
+                                name={cat.icon as keyof typeof Ionicons.glyphMap}
+                                size={16}
+                                color={isActive ? '#fff' : '#333'}
+                                style={{ marginRight: 6 }}
+                            />
+                            <Text style={[styles.label, isActive && styles.labelActive]}>
                                 {cat.label}
                             </Text>
                         </TouchableOpacity>
@@ -58,36 +57,31 @@ export default function CategoryRow({ categories, selectedCategory, onCategoryPr
 }
 
 const styles = StyleSheet.create({
-    categoriesContainer: {
+    container: {
         backgroundColor: '#fff',
-        paddingVertical: 10,
-        marginBottom: 8,
+        paddingVertical: 8,
     },
-    categoryRow: {
+    scrollContent: {
         paddingHorizontal: 16,
     },
-    categoryItem: {
+    chip: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 16,
-    },
-    iconCircle: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
         backgroundColor: '#f0f0f0',
-        justifyContent: 'center',
-        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 16,
+        marginRight: 8,
     },
-    iconCircleActive: {
+    chipActive: {
         backgroundColor: '#4CAF50',
     },
-    categoryLabel: {
-        marginTop: 4,
-        fontSize: 12,
+    label: {
+        fontSize: 14,
         color: '#333',
     },
-    categoryLabelActive: {
-        fontWeight: '700',
-        color: '#4CAF50',
+    labelActive: {
+        color: '#fff',
+        fontWeight: '600',
     },
 });

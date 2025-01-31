@@ -41,7 +41,7 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="favorites"
                 options={{
-                    title: 'Deels',
+                    title: 'Requests',
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
                             name={focused ? 'pricetags' : 'pricetags-outline'}
@@ -65,10 +65,7 @@ export default function TabLayout() {
                                 onPress={() => router.push('/(home)/modaltest')}
                             >
                                 {/* Replace Ionicons 'add' with your local image */}
-                                <Image
-                                    source={require('../../../assets/images/Asset_6.png')}
-                                    style={styles.recyclingIcon}
-                                />
+                                <Ionicons name="add" size={29} color="#FFF" />
                             </TouchableOpacity>
                         </Animated.View>
                     ),
