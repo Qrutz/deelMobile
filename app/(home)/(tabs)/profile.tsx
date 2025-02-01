@@ -69,7 +69,7 @@ export default function ProfilePage() {
                         icon="wallet-outline"
                         title="Wallet"
                         subtitle="IDR 300.000"
-                        onPress={() => router.push('/profile/wallet')}
+                        onPress={() => router.push('/wallet')}
                     />
                     <MenuItem
                         disabled
